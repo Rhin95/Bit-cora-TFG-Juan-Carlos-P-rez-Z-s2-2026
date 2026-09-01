@@ -1,0 +1,588 @@
+/*
+   T3S3 SX1262 - prueba de ventanas de tiempo sincronizadas por GPS contra
+   un gateway externo (RPi CM4 + SX1303, fuera de este repo).
+
+   Ambos lados obtienen hora UTC de un GPS y calculan, cada uno por su
+   cuenta, el mismo "join point" dentro de un schedule de ventanas TX/RX
+   que se repite en loop infinito - no hace falta encenderlos juntos,
+   porque ambos derivan el mismo punto de entrada de la misma tabla de
+   schedule y la misma referencia UTC.
+
+   Ver Plans/Plan_ventanas_sincronizadas_gps_v1.md para el diseño completo.
+*/
+
+#include "LoRaBoards.h"
+#include <RadioLib.h>
+#include <TinyGPS++.h>
+
+#if !defined(USING_SX1262)
+#error "Este firmware es solo para la variante T3S3 SX1262 (utilities.h)"
+#endif
+
+SX1262 radio = new Module(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RST_PIN, RADIO_BUSY_PIN);
+TinyGPSPlus gps;
+
+// ---------------------------------------------------------------------------
+// Roles y guardas del schedule
+// ---------------------------------------------------------------------------
+#define ROLE_IDLE 0
+#define ROLE_TX   1
+#define ROLE_RX   2
+#define GUARD_NONE  0
+#define GUARD_ROLE  1
+#define GUARD_CYCLE 2
+
+typedef struct {
+    uint32_t offset_ms;
+    uint32_t duration_ms;
+    uint8_t  sf;
+    float    freq_mhz;
+    bool     ldro;
+    uint8_t  t3s3_role;
+    uint8_t  gw_role;
+    uint8_t  guard_type;
+} schedule_slot_t;
+
+// Offsets en ms desde el inicio del ciclo (fase 0). IDENTICO al gateway.
+const schedule_slot_t SCHEDULE[] = {
+    {     0, 35000, 12, 902.0, true,  ROLE_TX,   ROLE_RX,   GUARD_NONE  },
+    { 35000,   800,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  },
+    { 35800, 35000, 12, 902.0, true,  ROLE_RX,   ROLE_TX,   GUARD_NONE  },
+    { 70800,  2000,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_CYCLE },
+    { 72800, 10000, 10, 902.6, false, ROLE_TX,   ROLE_RX,   GUARD_NONE  },
+    { 82800,   800,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  },
+    { 83600, 10000, 10, 902.6, false, ROLE_RX,   ROLE_TX,   GUARD_NONE  },
+    { 93600,  2000,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_CYCLE },
+    { 95600,  4000,  8, 903.2, false, ROLE_TX,   ROLE_RX,   GUARD_NONE  },
+    { 99600,   800,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  },
+    {100400,  4000,  8, 903.2, false, ROLE_RX,   ROLE_TX,   GUARD_NONE  },
+};
+#define SCHEDULE_LEN 11
+#define SCHEDULE_CYCLE_MS 104400UL
+
+// ---------------------------------------------------------------------------
+// Parametros LoRa fijos y formato de paquete
+// ---------------------------------------------------------------------------
+#define LORA_SYNC_WORD       0x34
+#define LORA_PREAMBLE_LEN    8
+#define LORA_TX_POWER        -9
+#define LORA_CODING_RATE     6
+
+#define PAYLOAD_SIZE         38
+#define PACKETS_PER_WINDOW   10
+#define INTER_PACKET_GAP_MS  40
+#define ORIGIN_T3S3           0xAA
+#define ORIGIN_GATEWAY         0xBB
+
+// ---------------------------------------------------------------------------
+// Estado global de sincronizacion y vueltas
+// ---------------------------------------------------------------------------
+static uint32_t t0_local_ms = 0;   // ancla de fase 0, nunca se resetea
+static int      i_start = 0;       // primer slot a ejecutar (del join point)
+static uint32_t lap = 0;           // contador de vueltas
+
+static inline uint32_t getElapsedMs()
+{
+    return millis() - t0_local_ms;
+}
+
+// ---------------------------------------------------------------------------
+// Logging
+// ---------------------------------------------------------------------------
+static void logMsg(const char *tag, const char *fmt, ...)
+{
+    char buf[256];
+
+    if (gps.time.isValid() && gps.time.age() < 5000) {
+        snprintf(buf, sizeof(buf), "[%02d:%02d:%02d.%03d] [%s] ",
+                 gps.time.hour(), gps.time.minute(), gps.time.second(),
+                 gps.time.centisecond() * 10, tag);
+    } else {
+        uint32_t ms = millis();
+        uint32_t s = ms / 1000;
+        snprintf(buf, sizeof(buf), "[%02d:%02d:%02d.%03d] [%s] ",
+                 (int)((s / 3600) % 24), (int)((s / 60) % 60), (int)(s % 60), (int)(ms % 1000), tag);
+    }
+    Serial.print(buf);
+
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, args);
+    va_end(args);
+    Serial.println(buf);
+}
+
+// ---------------------------------------------------------------------------
+// GPS: fix, epoch UTC, fase de ciclo y join point
+// ---------------------------------------------------------------------------
+static void feedGPS()
+{
+    while (SerialGPS.available()) {
+        gps.encode(SerialGPS.read());
+    }
+}
+
+static void feedGPSUntilFresh()
+{
+    unsigned long start = millis();
+    while (millis() - start < 3000) {
+        feedGPS();
+        if (gps.time.isUpdated() && gps.time.age() < 500) {
+            return;
+        }
+        delay(10);
+    }
+    logMsg("GPS-FIX", "WARN: GPS data no se refresco en 3s, usando ultimo valor");
+}
+
+static void waitForGPSFix()
+{
+    logMsg("GPS-FIX", "esperando fix...");
+    uint32_t waitStartMs = millis();
+    uint32_t lastReportMs = 0;
+    while (true) {
+        feedGPS();
+        if (gps.location.isValid() && gps.date.isValid() && gps.time.isValid()) {
+            if (gps.location.age() < 2000) {
+                logMsg("GPS-FIX", "fix obtenido lat=%.6f lon=%.6f sats=%d",
+                       gps.location.lat(), gps.location.lng(), gps.satellites.value());
+                return;
+            }
+        }
+
+        // Periodic heartbeat so "no arranca" is distinguishable from "sigue
+        // esperando fix GPS" on the serial monitor. chars=0 after several
+        // reports means nothing is arriving on GPS_RX_PIN at all (wiring/
+        // power issue), not just "no fix yet".
+        uint32_t elapsedMs = millis() - waitStartMs;
+        if (elapsedMs - lastReportMs >= 2000) {
+            lastReportMs = elapsedMs;
+            logMsg("GPS-FIX", "waiting for gps signal... elapsed=%us chars=%lu sats=%d",
+                   (unsigned)(elapsedMs / 1000),
+                   (unsigned long)gps.charsProcessed(),
+                   gps.satellites.isValid() ? gps.satellites.value() : 0);
+        }
+
+        delay(100);
+    }
+}
+
+// Construye el struct tm desde los campos UTC del GPS y usa mktime().
+// setenv("TZ","UTC0",1) + tzset() en setup() garantiza que mktime() no
+// aplique ningun offset de timezone.
+static uint64_t getGPSEpochMs()
+{
+    struct tm t = {0};
+    t.tm_year = gps.date.year() - 1900;
+    t.tm_mon  = gps.date.month() - 1;
+    t.tm_mday = gps.date.day();
+    t.tm_hour = gps.time.hour();
+    t.tm_min  = gps.time.minute();
+    t.tm_sec  = gps.time.second();
+    t.tm_isdst = 0;
+
+    time_t epoch = mktime(&t);
+    return (uint64_t)epoch * 1000ULL + (uint64_t)gps.time.centisecond() * 10ULL;
+}
+
+// Primer slot activo (GUARD_NONE) con offset > phase_ms; si no hay ninguno,
+// slot 0 del ciclo siguiente.
+static int find_join_point(uint32_t phase_ms, int *join_lap)
+{
+    for (int i = 0; i < SCHEDULE_LEN; i++) {
+        if (SCHEDULE[i].guard_type == GUARD_NONE && SCHEDULE[i].offset_ms > phase_ms) {
+            *join_lap = 0;
+            return i;
+        }
+    }
+    *join_lap = 1;
+    return 0;
+}
+
+static void syncAndJoin()
+{
+    feedGPSUntilFresh();
+
+    uint64_t ref_utc_ms = getGPSEpochMs();
+    uint32_t phase_ms = (uint32_t)(ref_utc_ms % SCHEDULE_CYCLE_MS);
+
+    logMsg("SYNC", "UTC_ms=%llu phase_ms=%u", (unsigned long long)ref_utc_ms, phase_ms);
+
+    int join_lap_offset;
+    int join_index = find_join_point(phase_ms, &join_lap_offset);
+
+    uint32_t join_axis_ms = (uint32_t)join_lap_offset * SCHEDULE_CYCLE_MS + SCHEDULE[join_index].offset_ms;
+    uint32_t delta_ms = join_axis_ms - phase_ms;
+
+    logMsg("SYNC", "join_index=%d join_lap=%d join_axis_ms=%u delta_ms=%u",
+           join_index, join_lap_offset, join_axis_ms, delta_ms);
+
+    uint32_t wait_start = millis();
+    uint32_t last_countdown_bucket = 0xFFFFFFFF;
+    while (millis() - wait_start < delta_ms) {
+        uint32_t remaining = delta_ms - (millis() - wait_start);
+        uint32_t bucket = remaining / 5000;
+        if (remaining > 5000 && bucket != last_countdown_bucket) {
+            logMsg("COUNTDOWN", "faltan %u ms para join point", remaining);
+            last_countdown_bucket = bucket;
+        }
+        feedGPS();
+        delay(1);
+    }
+
+    t0_local_ms = millis() - join_axis_ms;
+    i_start = join_index;
+    lap = (uint32_t)join_lap_offset;
+
+    // El radio sigue con los parametros que dejo setup() (SCHEDULE[0]). Si el
+    // join cae despues del slot 0, loop() arranca directo en i_start y nunca
+    // pasa por los GUARD_CYCLE anteriores (que son los unicos que reconfiguran
+    // el radio) - se queda con SF/freq/LDRO viejos hasta terminar esa primera
+    // vuelta parcial. Reconfigurar explicitamente al slot de join lo corrige.
+    reconfigureRadio(SCHEDULE[i_start].sf, SCHEDULE[i_start].freq_mhz, SCHEDULE[i_start].ldro);
+
+    logMsg("SYNC", "JOIN alcanzado - t0_local=%u elapsed_ms=%u i_start=%d",
+           t0_local_ms, getElapsedMs(), i_start);
+}
+
+// t0_local_ms se fija una sola vez en syncAndJoin() (setup()) y de ahi en mas
+// getElapsedMs() corre sobre millis() libre, sin corregirse contra el GPS. En
+// una corrida larga eso deja que el reloj del T3S3 derive respecto al UTC
+// real (cristal sin TCXO), y las ventanas RX se van desalineando del TX del
+// gateway. Esta funcion se llama una vez por vuelta, justo en el limite de
+// ciclo (elapsed_ms ya deberia estar en un multiplo exacto de
+// SCHEDULE_CYCLE_MS), y corrige t0_local_ms con una lectura fresca de GPS.
+static void resyncClockToGPS()
+{
+    feedGPSUntilFresh();
+    if (!gps.time.isValid() || gps.time.age() >= 500) {
+        logMsg("SYNC", "WARN: resync salteado, sin fix GPS fresco");
+        return;
+    }
+
+    uint64_t ref_utc_ms = getGPSEpochMs();
+    uint32_t actual_phase_ms = (uint32_t)(ref_utc_ms % SCHEDULE_CYCLE_MS);
+
+    // En este punto del loop (justo tras terminar el ultimo slot del ciclo)
+    // la fase esperada es 0. actual_phase_ms es entonces directamente el
+    // drift acumulado, con signo segun de que lado del limite de ciclo cayo:
+    // valores chicos = el UTC real ya paso la fase 0 (T3S3 va atrasado),
+    // valores cerca de SCHEDULE_CYCLE_MS = el UTC real todavia no llega
+    // (T3S3 va adelantado).
+    int32_t drift_ms = (actual_phase_ms > SCHEDULE_CYCLE_MS / 2)
+                        ? (int32_t)actual_phase_ms - (int32_t)SCHEDULE_CYCLE_MS
+                        : (int32_t)actual_phase_ms;
+
+    // Clamp de seguridad: un drift mayor a 5s en un solo ciclo es mas
+    // creible que sea un fix GPS malo que drift real de cristal - no tocar
+    // t0_local_ms en ese caso, para no desalinear el schedule de un salto.
+    if (drift_ms > 5000 || drift_ms < -5000) {
+        logMsg("SYNC", "WARN: resync drift_ms=%d fuera de rango, no se ajusta", drift_ms);
+        return;
+    }
+
+    if (drift_ms != 0) {
+        t0_local_ms -= (uint32_t)drift_ms;
+        logMsg("SYNC", "resync drift_ms=%d t0_local ajustado a %u", drift_ms, t0_local_ms);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Display OLED (opcional - disp puede ser NULL si no hay pantalla conectada)
+// ---------------------------------------------------------------------------
+static void drawMain(const char *role, uint8_t sf, float freq_mhz)
+{
+    if (!disp) {
+        return;
+    }
+    char sfStr[8];
+    char freqStr[12];
+    snprintf(sfStr, sizeof(sfStr), "%d", sf);
+    snprintf(freqStr, sizeof(freqStr), "%.1f", freq_mhz);
+
+    disp->clearBuffer();
+    disp->drawRFrame(0, 0, 128, 64, 5);
+
+    disp->setFont(u8g2_font_pxplusibmvga8_mr);
+    disp->setCursor(15, 20);
+    disp->print("ROLE:");
+    disp->setCursor(15, 35);
+    disp->print("SF:");
+    disp->setCursor(15, 50);
+    disp->print("FREQ:");
+
+    disp->setFont(u8g2_font_crox1h_tr);
+    disp->setCursor( U8G2_HOR_ALIGN_RIGHT(role) - 21, 20 );
+    disp->print(role);
+    disp->setCursor( U8G2_HOR_ALIGN_RIGHT(sfStr) - 21, 35 );
+    disp->print(sfStr);
+    disp->setCursor( U8G2_HOR_ALIGN_RIGHT(freqStr) - 21, 50 );
+    disp->print(freqStr);
+    disp->sendBuffer();
+}
+
+// ---------------------------------------------------------------------------
+// Reconfiguracion del radio (SF / frecuencia / LDRO)
+// ---------------------------------------------------------------------------
+static void reconfigureRadio(uint8_t sf, float freq_mhz, bool ldro)
+{
+    uint32_t t_start = millis();
+
+    radio.standby();
+
+    int state = radio.setFrequency(freq_mhz);
+    if (state != RADIOLIB_ERR_NONE) {
+        logMsg("RECONFIG", "ERROR setFrequency(%.1f) = %d", freq_mhz, state);
+    }
+
+    state = radio.setSpreadingFactor(sf);
+    if (state != RADIOLIB_ERR_NONE) {
+        logMsg("RECONFIG", "ERROR setSpreadingFactor(%d) = %d", sf, state);
+    }
+
+    state = radio.forceLDRO(ldro);
+    if (state != RADIOLIB_ERR_NONE) {
+        logMsg("RECONFIG", "ERROR forceLDRO(%s) = %d", ldro ? "ON" : "OFF", state);
+    }
+
+    uint32_t t_elapsed = millis() - t_start;
+    logMsg("RECONFIG", "SF%d %.1fMHz LDRO=%s en %ums",
+           sf, freq_mhz, ldro ? "ON" : "OFF", t_elapsed);
+}
+
+// ---------------------------------------------------------------------------
+// Ventana de transmision (T3S3 -> Gateway)
+// ---------------------------------------------------------------------------
+static void executeTransmitWindow(const schedule_slot_t *slot, uint32_t slot_start_ms, uint32_t slot_end_ms)
+{
+    // IQ normal: el gateway (SX1302/SX1303) espera IQ normal del nodo.
+    radio.invertIQ(false);
+
+    logMsg("TX-START", "SF%d %.1fMHz LDRO=%s ventana=%ums",
+           slot->sf, slot->freq_mhz, slot->ldro ? "ON" : "OFF", slot->duration_ms);
+
+    int packets_sent = 0;
+    uint32_t window_local_start = millis();
+
+    for (int i = 0; i < PACKETS_PER_WINDOW; i++) {
+        uint8_t pkt[PAYLOAD_SIZE];
+        memset(pkt, 0x55, PAYLOAD_SIZE);
+        pkt[0] = slot->sf;
+        uint32_t freq_khz = (uint32_t)(slot->freq_mhz * 1000.0f + 0.5f);
+        uint16_t freq_field = (uint16_t)(freq_khz - 900000UL);
+        memcpy(&pkt[1], &freq_field, 2);
+        pkt[3] = (uint8_t)i;
+        pkt[4] = PACKETS_PER_WINDOW;
+        uint32_t ts = millis() - window_local_start;
+        memcpy(&pkt[5], &ts, 4);
+        pkt[9] = ORIGIN_T3S3;
+
+        uint32_t t_before = millis();
+        int state = radio.transmit(pkt, PAYLOAD_SIZE);
+        uint32_t t_after = millis();
+        uint32_t toa_measured = t_after - t_before;
+
+        if (state == RADIOLIB_ERR_NONE) {
+            packets_sent++;
+            logMsg("TX", "pkt=%d/%d toa=%ums ok", i + 1, PACKETS_PER_WINDOW, toa_measured);
+        } else {
+            logMsg("TX", "pkt=%d/%d FAIL err=%d", i + 1, PACKETS_PER_WINDOW, state);
+        }
+
+        if (getElapsedMs() + INTER_PACKET_GAP_MS >= slot_end_ms) {
+            logMsg("TX-WARN", "ventana agotada en pkt %d", i + 1);
+            break;
+        }
+        if (i < PACKETS_PER_WINDOW - 1) {
+            delay(INTER_PACKET_GAP_MS);
+        }
+    }
+
+    uint32_t elapsed_window = millis() - window_local_start;
+    logMsg("TX-END", "SF%d %.1fMHz sent=%d/%d elapsed=%ums window=%ums",
+           slot->sf, slot->freq_mhz, packets_sent, PACKETS_PER_WINDOW, elapsed_window, slot->duration_ms);
+}
+
+// ---------------------------------------------------------------------------
+// Ventana de recepcion (Gateway -> T3S3)
+// ---------------------------------------------------------------------------
+static volatile bool rxPacketFlag = false;
+
+#if defined(ESP32)
+IRAM_ATTR
+#endif
+static void onPacketReceived(void)
+{
+    rxPacketFlag = true;
+}
+
+static void executeReceiveWindow(const schedule_slot_t *slot, uint32_t slot_start_ms, uint32_t slot_end_ms)
+{
+    // IQ invertida: el gateway transmite con IQ invertida hacia el nodo.
+    radio.invertIQ(true);
+
+    rxPacketFlag = false;
+    radio.setPacketReceivedAction(onPacketReceived);
+    int state = radio.startReceive();
+    if (state != RADIOLIB_ERR_NONE) {
+        logMsg("RX-START", "ERROR startReceive() = %d", state);
+    }
+
+    logMsg("RX-START", "SF%d %.1fMHz LDRO=%s ventana=%ums",
+           slot->sf, slot->freq_mhz, slot->ldro ? "ON" : "OFF", slot->duration_ms);
+
+    int packets_received = 0;
+    int packets_crc_bad = 0;
+    int packets_other_err = 0;
+
+    while (getElapsedMs() < slot_end_ms) {
+        feedGPS();
+
+        if (rxPacketFlag) {
+            rxPacketFlag = false;
+
+            uint8_t buf[PAYLOAD_SIZE];
+            state = radio.readData(buf, PAYLOAD_SIZE);
+
+            if (state == RADIOLIB_ERR_NONE) {
+                float rssi = radio.getRSSI();
+                float snr = radio.getSNR();
+                float freqErr = radio.getFrequencyError();
+
+                uint8_t pkt_sf = buf[0];
+                uint16_t pkt_freq_field;
+                memcpy(&pkt_freq_field, &buf[1], 2);
+                uint32_t pkt_freq_khz = (uint32_t)pkt_freq_field + 900000UL;
+                uint8_t pkt_index = buf[3];
+                uint8_t pkt_total = buf[4];
+                uint32_t pkt_ts;
+                memcpy(&pkt_ts, &buf[5], 4);
+                uint8_t pkt_origin = buf[9];
+
+                logMsg("RX", "pkt=%d/%d SF%d freq=%.1f origin=0x%02X rssi=%.1f snr=%.1f freqErr=%.1f ts=%u",
+                       pkt_index + 1, pkt_total, pkt_sf, pkt_freq_khz / 1000.0f, pkt_origin, rssi, snr, freqErr, pkt_ts);
+
+                packets_received++;
+            } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
+                packets_crc_bad++;
+                logMsg("RX", "CRC_BAD rssi=%.1f snr=%.1f", radio.getRSSI(), radio.getSNR());
+            } else {
+                packets_other_err++;
+                logMsg("RX", "ERROR readData() = %d", state);
+            }
+
+            radio.startReceive();
+        }
+
+        delay(1);
+    }
+
+    radio.standby();
+    radio.clearDio1Action();
+    radio.invertIQ(false);
+
+    float per = (1.0f - (float)packets_received / (float)PACKETS_PER_WINDOW) * 100.0f;
+    logMsg("RX-END", "SF%d %.1fMHz recv=%d/%d crc_bad=%d err=%d PER=%.1f%%",
+           slot->sf, slot->freq_mhz, packets_received, PACKETS_PER_WINDOW,
+           packets_crc_bad, packets_other_err, per);
+}
+
+// ---------------------------------------------------------------------------
+// setup / loop
+// ---------------------------------------------------------------------------
+void setup()
+{
+    setupBoards();
+
+    delay(1500);
+
+    // setupBoards() corre un barrido de baudrate pensado para modulos UBlox
+    // que no reconoce a este L76K, dejando SerialGPS en el baud equivocado
+    // (4800). Forzarlo de nuevo al baud real del L76K (mismo fix usado en
+    // examples/GPS/TinyGPS_Example/TinyGPS_Example.ino).
+    SerialGPS.begin(GPS_BAUD_RATE, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+
+    // mktime() no debe aplicar ningun offset de timezone.
+    setenv("TZ", "UTC0", 1);
+    tzset();
+
+    int state = radio.begin();
+    printResult(state == RADIOLIB_ERR_NONE);
+    if (state != RADIOLIB_ERR_NONE) {
+        logMsg("INIT", "radio.begin() fallo codigo=%d", state);
+        while (true) {
+            delay(1000);
+        }
+    }
+
+    radio.setBandwidth(125.0);
+    radio.setCodingRate(LORA_CODING_RATE);
+    radio.setPreambleLength(LORA_PREAMBLE_LEN);
+    radio.setCRC(true);
+    radio.explicitHeader();
+    radio.setSyncWord(LORA_SYNC_WORD);
+    radio.setOutputPower(LORA_TX_POWER);
+
+    // Parametros del primer slot del schedule (SF12 / 902.0 MHz / LDRO ON).
+    radio.setFrequency(SCHEDULE[0].freq_mhz);
+    radio.setSpreadingFactor(SCHEDULE[0].sf);
+    state = radio.forceLDRO(SCHEDULE[0].ldro);
+    if (state != RADIOLIB_ERR_NONE) {
+        logMsg("INIT", "ERROR forceLDRO(%s) = %d", SCHEDULE[0].ldro ? "ON" : "OFF", state);
+    }
+
+    logMsg("INIT", "Radio SX1262 inicializado OK sf=%d freq=%.1f", SCHEDULE[0].sf, SCHEDULE[0].freq_mhz);
+    logMsg("INIT", "Esperando GPS fix...");
+
+    waitForGPSFix();
+    syncAndJoin();
+}
+
+void loop()
+{
+    for (;;) {
+        logMsg("LAP", "vuelta=%u i_start=%d elapsed_ms=%u", lap, i_start, getElapsedMs());
+
+        for (int s = i_start; s < SCHEDULE_LEN; s++) {
+            const schedule_slot_t *slot = &SCHEDULE[s];
+
+            uint32_t slot_start_ms = lap * SCHEDULE_CYCLE_MS + slot->offset_ms;
+            uint32_t slot_end_ms   = slot_start_ms + slot->duration_ms;
+
+            while (getElapsedMs() < slot_start_ms) {
+                feedGPS();
+                delay(1);
+            }
+
+            if (slot->guard_type == GUARD_ROLE || slot->guard_type == GUARD_CYCLE) {
+                // Retunear durante la guarda si el proximo slot activo difiere
+                // del anterior en freq/SF/LDRO - se compara contra los slots
+                // activos reales, no se asume que solo GUARD_CYCLE implica
+                // cambio (esa distincion ya no existe del lado del gateway).
+                const schedule_slot_t *prev = &SCHEDULE[s - 1];
+                const schedule_slot_t *next = &SCHEDULE[s + 1];
+                if (next->freq_mhz != prev->freq_mhz || next->sf != prev->sf || next->ldro != prev->ldro) {
+                    reconfigureRadio(next->sf, next->freq_mhz, next->ldro);
+                }
+                continue;
+            }
+
+            // Slot activo (GUARD_NONE)
+            if (slot->t3s3_role == ROLE_TX) {
+                drawMain("TX", slot->sf, slot->freq_mhz);
+                executeTransmitWindow(slot, slot_start_ms, slot_end_ms);
+            } else if (slot->t3s3_role == ROLE_RX) {
+                drawMain("RX", slot->sf, slot->freq_mhz);
+                executeReceiveWindow(slot, slot_start_ms, slot_end_ms);
+            }
+        }
+
+        logMsg("LAP", "vuelta=%u completada, reconfigurando a SF%d/%.1fMHz para slot 0",
+               lap, SCHEDULE[0].sf, SCHEDULE[0].freq_mhz);
+        resyncClockToGPS();
+        reconfigureRadio(SCHEDULE[0].sf, SCHEDULE[0].freq_mhz, SCHEDULE[0].ldro);
+
+        lap++;
+        i_start = 0;
+    }
+}

@@ -1,0 +1,280 @@
+Update baudrate : 9600
+Get ack successes!
+Get ack successes!
+Get ack successes!
+Update baudrate : 19200
+Update baudrate : 38400
+Update baudrate : 57600
+Update baudrate : 115200
+Update baudrate : 230400
+Update baudrate : 460800
+Update baudrate : 921600
+Update baudrate : 4800
+Radio        : +
+PSRAM        : +
+Display      : +
+Sd Card      : -
+GPS          : -
+[00:00:35.899] [INIT] Radio SX1262 inicializado OK sf=12 freq=902.0
+[00:00:35.900] [INIT] Esperando GPS fix...
+[00:00:35.900] [GPS-FIX] esperando fix...
+[02:31:26.000] [GPS-FIX] fix obtenido lat=9.913657 lon=-84.087569 sats=9
+[02:31:27.000] [SYNC] UTC_ms=1788229887000 phase_ms=79800
+[02:31:27.000] [SYNC] join_index=6 join_lap=0 join_axis_ms=83600 delta_ms=3800
+[02:31:30.000] [RECONFIG] SF10 902.6MHz LDRO=OFF en 0ms
+[02:31:30.000] [SYNC] JOIN alcanzado - t0_local=4294924630 elapsed_ms=83601 i_start=6
+[02:31:30.000] [LAP] vuelta=0 i_start=6 elapsed_ms=83601
+[02:31:30.000] [RX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:31:32.000] [RX] pkt=1/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.8 freqErr=-336.2 ts=1
+[02:31:32.000] [RX] pkt=2/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-343.9 ts=670
+[02:31:33.000] [RX] pkt=3/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.8 freqErr=-347.8 ts=1340
+[02:31:34.000] [RX] pkt=4/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.8 freqErr=-345.8 ts=2009
+[02:31:34.000] [RX] pkt=5/10 SF10 freq=902.6 origin=0xBB rssi=-26.0 snr=7.8 freqErr=-345.8 ts=2679
+[02:31:35.000] [RX] pkt=6/10 SF10 freq=902.6 origin=0xBB rssi=-26.0 snr=7.8 freqErr=-345.8 ts=3349
+[02:31:36.000] [RX] pkt=7/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=8.0 freqErr=-345.8 ts=4019
+[02:31:36.000] [RX] pkt=8/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.8 freqErr=-343.9 ts=4689
+[02:31:37.000] [RX] pkt=9/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=8.2 freqErr=-343.9 ts=5359
+[02:31:38.000] [RX] pkt=10/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=8.5 freqErr=-342.0 ts=6029
+[02:31:40.000] [RX-END] SF10 902.6MHz recv=10/10 crc_bad=0 err=0 PER=0.0%
+[02:31:40.000] [RECONFIG] SF8 903.2MHz LDRO=OFF en 1ms
+[02:31:42.000] [TX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:31:42.000] [TX] pkt=1/10 toa=172ms ok
+[02:31:42.000] [TX] pkt=2/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=3/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=4/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=5/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=6/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=7/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=8/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=9/10 toa=171ms ok
+[02:31:42.000] [TX] pkt=10/10 toa=171ms ok
+[02:31:42.000] [TX-END] SF8 903.2MHz sent=10/10 elapsed=2071ms window=4000ms
+[02:31:47.000] [RX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:31:51.000] [RX-END] SF8 903.2MHz recv=0/10 crc_bad=0 err=0 PER=100.0%
+[02:31:51.000] [LAP] vuelta=0 completada, reconfigurando a SF12/902.0MHz para slot 0
+[02:31:52.000] [SYNC] resync drift_ms=400 t0_local ajustado a 4294924230
+[02:31:52.000] [RECONFIG] SF12 902.0MHz LDRO=ON en 1ms
+[02:31:52.000] [LAP] vuelta=1 i_start=0 elapsed_ms=105202
+[02:31:52.000] [TX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:31:52.000] [TX] pkt=1/10 toa=2244ms ok
+[02:31:52.000] [TX] pkt=2/10 toa=2243ms ok
+[00:01:08.980] [TX] pkt=3/10 toa=2243ms ok
+[00:01:11.264] [TX] pkt=4/10 toa=2243ms ok
+[00:01:13.548] [TX] pkt=5/10 toa=2243ms ok
+[00:01:15.832] [TX] pkt=6/10 toa=2243ms ok
+[00:01:18.116] [TX] pkt=7/10 toa=2243ms ok
+[00:01:20.400] [TX] pkt=8/10 toa=2243ms ok
+[00:01:22.684] [TX] pkt=9/10 toa=2243ms ok
+[00:01:24.968] [TX] pkt=10/10 toa=2243ms ok
+[00:01:24.968] [TX-END] SF12 902.0MHz sent=10/10 elapsed=22799ms window=35000ms
+[02:32:27.000] [RX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:32:30.000] [RX] pkt=1/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.8 freqErr=-340.3 ts=1
+[02:32:33.000] [RX] pkt=2/10 SF12 freq=902.0 origin=0xBB rssi=-23.0 snr=4.5 freqErr=-344.1 ts=2543
+[02:32:35.000] [RX] pkt=3/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-339.3 ts=5088
+[02:32:38.000] [RX] pkt=4/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.8 freqErr=-336.9 ts=7631
+[02:32:40.000] [RX] pkt=5/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=5.0 freqErr=-334.0 ts=10175
+[02:32:43.000] [RX] pkt=6/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=5.0 freqErr=-332.5 ts=12718
+[02:32:45.000] [RX] pkt=7/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-329.6 ts=15261
+[02:32:48.000] [RX] pkt=8/10 SF12 freq=902.0 origin=0xBB rssi=-23.0 snr=4.8 freqErr=-326.7 ts=17806
+[02:32:50.000] [RX] pkt=9/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-322.8 ts=20348
+[02:32:53.000] [RX] pkt=10/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-320.9 ts=22892
+[02:33:01.000] [RX-END] SF12 902.0MHz recv=10/10 crc_bad=0 err=0 PER=0.0%
+[02:33:01.000] [RECONFIG] SF10 902.6MHz LDRO=OFF en 1ms
+[02:33:03.000] [TX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:33:03.000] [TX] pkt=1/10 toa=566ms ok
+[02:33:03.000] [TX] pkt=2/10 toa=566ms ok
+[02:33:03.000] [TX] pkt=3/10 toa=566ms ok
+[02:33:03.000] [TX] pkt=4/10 toa=566ms ok
+[02:33:03.000] [TX] pkt=5/10 toa=566ms ok
+[02:33:03.000] [TX] pkt=6/10 toa=566ms ok
+[02:33:03.000] [TX] pkt=7/10 toa=566ms ok
+[00:02:18.975] [TX] pkt=8/10 toa=566ms ok
+[00:02:19.581] [TX] pkt=9/10 toa=566ms ok
+[00:02:20.187] [TX] pkt=10/10 toa=566ms ok
+[00:02:20.187] [TX-END] SF10 902.6MHz sent=10/10 elapsed=6020ms window=10000ms
+[02:33:14.000] [RX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:33:16.000] [RX] pkt=1/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-320.7 ts=1
+[02:33:17.000] [RX] pkt=2/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.0 freqErr=-328.4 ts=671
+[02:33:17.000] [RX] pkt=3/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-330.3 ts=1341
+[02:33:18.000] [RX] pkt=4/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-328.4 ts=2011
+[02:33:19.000] [RX] pkt=5/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-330.3 ts=2681
+[02:33:19.000] [RX] pkt=6/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=7.8 freqErr=-328.4 ts=3350
+[02:33:20.000] [RX] pkt=7/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-328.4 ts=4020
+[02:33:21.000] [RX] pkt=8/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-328.4 ts=4690
+[02:33:21.000] [RX] pkt=9/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=7.5 freqErr=-328.4 ts=5360
+[02:33:22.000] [RX] pkt=10/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-326.5 ts=6030
+[02:33:24.000] [RX-END] SF10 902.6MHz recv=10/10 crc_bad=0 err=0 PER=0.0%
+[02:33:24.000] [RECONFIG] SF8 903.2MHz LDRO=OFF en 1ms
+[02:33:26.000] [TX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:33:26.000] [TX] pkt=1/10 toa=172ms ok
+[02:33:26.000] [TX] pkt=2/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=3/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=4/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=5/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=6/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=7/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=8/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=9/10 toa=171ms ok
+[02:33:26.000] [TX] pkt=10/10 toa=171ms ok
+[02:33:26.000] [TX-END] SF8 903.2MHz sent=10/10 elapsed=2072ms window=4000ms
+[02:33:31.000] [RX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:33:35.000] [RX-END] SF8 903.2MHz recv=0/10 crc_bad=0 err=0 PER=100.0%
+[02:33:35.000] [LAP] vuelta=1 completada, reconfigurando a SF12/902.0MHz para slot 0
+[02:33:36.000] [RECONFIG] SF12 902.0MHz LDRO=ON en 1ms
+[02:33:36.000] [LAP] vuelta=2 i_start=0 elapsed_ms=209212
+[02:33:36.000] [TX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:33:36.000] [TX] pkt=1/10 toa=2244ms ok
+[02:33:36.000] [TX] pkt=2/10 toa=2243ms ok
+[00:02:52.990] [TX] pkt=3/10 toa=2243ms ok
+[00:02:55.274] [TX] pkt=4/10 toa=2243ms ok
+[00:02:57.558] [TX] pkt=5/10 toa=2243ms ok
+[00:02:59.842] [TX] pkt=6/10 toa=2243ms ok
+[00:03:02.126] [TX] pkt=7/10 toa=2243ms ok
+[00:03:04.410] [TX] pkt=8/10 toa=2243ms ok
+[00:03:06.694] [TX] pkt=9/10 toa=2243ms ok
+[00:03:08.978] [TX] pkt=10/10 toa=2243ms ok
+[00:03:08.978] [TX-END] SF12 902.0MHz sent=10/10 elapsed=22799ms window=35000ms
+[02:34:11.000] [RX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:34:15.000] [RX] pkt=1/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.5 freqErr=-328.2 ts=0
+[02:34:17.000] [RX] pkt=2/10 SF12 freq=902.0 origin=0xBB rssi=-26.0 snr=5.2 freqErr=-332.5 ts=2545
+[02:34:20.000] [RX] pkt=3/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.8 freqErr=-329.6 ts=5089
+[02:34:22.000] [RX] pkt=4/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.8 freqErr=-326.2 ts=7632
+[02:34:25.000] [RX] pkt=5/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=5.2 freqErr=-322.8 ts=10176
+[02:34:27.000] [RX] pkt=6/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.8 freqErr=-318.5 ts=12719
+[02:34:30.000] [RX] pkt=7/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.5 freqErr=-315.6 ts=15262
+[02:34:32.000] [RX] pkt=8/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.8 freqErr=-313.1 ts=17806
+[02:34:35.000] [RX] pkt=9/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.5 freqErr=-311.7 ts=20349
+[02:34:37.000] [RX] pkt=10/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.0 freqErr=-309.3 ts=22893
+[02:34:46.000] [RX-END] SF12 902.0MHz recv=10/10 crc_bad=0 err=0 PER=0.0%
+[02:34:46.000] [RECONFIG] SF10 902.6MHz LDRO=OFF en 1ms
+[02:34:48.000] [TX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:34:48.000] [TX] pkt=1/10 toa=566ms ok
+[02:34:48.000] [TX] pkt=2/10 toa=566ms ok
+[02:34:48.000] [TX] pkt=3/10 toa=566ms ok
+[02:34:48.000] [TX] pkt=4/10 toa=566ms ok
+[02:34:48.000] [TX] pkt=5/10 toa=566ms ok
+[02:34:48.000] [TX] pkt=6/10 toa=566ms ok
+[02:34:48.000] [TX] pkt=7/10 toa=566ms ok
+[00:04:03.375] [TX] pkt=8/10 toa=566ms ok
+[00:04:03.981] [TX] pkt=9/10 toa=566ms ok
+[00:04:04.587] [TX] pkt=10/10 toa=566ms ok
+[00:04:04.587] [TX-END] SF10 902.6MHz sent=10/10 elapsed=6020ms window=10000ms
+[02:34:59.000] [RX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:35:00.000] [RX] pkt=1/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-307.1 ts=1
+[02:35:01.000] [RX] pkt=2/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-314.8 ts=671
+[02:35:02.000] [RX] pkt=3/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-318.7 ts=1341
+[02:35:02.000] [RX] pkt=4/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-318.7 ts=2011
+[02:35:03.000] [RX] pkt=5/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-316.8 ts=2681
+[02:35:04.000] [RX] pkt=6/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-316.8 ts=3350
+[02:35:04.000] [RX] pkt=7/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=7.8 freqErr=-316.8 ts=4020
+[02:35:05.000] [RX] pkt=8/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=8.0 freqErr=-314.8 ts=4690
+[02:35:06.000] [RX] pkt=9/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-312.9 ts=5360
+[02:35:06.000] [RX] pkt=10/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-312.9 ts=6030
+[02:35:09.000] [RX-END] SF10 902.6MHz recv=10/10 crc_bad=0 err=0 PER=0.0%
+[02:35:09.000] [RECONFIG] SF8 903.2MHz LDRO=OFF en 0ms
+[02:35:11.000] [TX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:35:11.000] [TX] pkt=1/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=2/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=3/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=4/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=5/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=6/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=7/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=8/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=9/10 toa=171ms ok
+[02:35:11.000] [TX] pkt=10/10 toa=171ms ok
+[02:35:11.000] [TX-END] SF8 903.2MHz sent=10/10 elapsed=2071ms window=4000ms
+[02:35:15.000] [RX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:35:19.000] [RX-END] SF8 903.2MHz recv=0/10 crc_bad=0 err=0 PER=100.0%
+[02:35:19.000] [LAP] vuelta=2 completada, reconfigurando a SF12/902.0MHz para slot 0
+[02:35:20.000] [SYNC] resync drift_ms=-400 t0_local ajustado a 4294924630
+[02:35:20.000] [RECONFIG] SF12 902.0MHz LDRO=ON en 1ms
+[02:35:20.000] [LAP] vuelta=3 i_start=0 elapsed_ms=312812
+[02:35:20.000] [TX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:35:20.000] [TX] pkt=1/10 toa=2243ms ok
+[02:35:20.000] [TX] pkt=2/10 toa=2243ms ok
+[00:04:37.378] [TX] pkt=3/10 toa=2243ms ok
+[00:04:39.662] [TX] pkt=4/10 toa=2243ms ok
+[00:04:41.946] [TX] pkt=5/10 toa=2243ms ok
+[00:04:44.230] [TX] pkt=6/10 toa=2243ms ok
+[00:04:46.514] [TX] pkt=7/10 toa=2243ms ok
+[00:04:48.798] [TX] pkt=8/10 toa=2243ms ok
+[00:04:51.082] [TX] pkt=9/10 toa=2243ms ok
+[00:04:53.366] [TX] pkt=10/10 toa=2243ms ok
+[00:04:53.366] [TX-END] SF12 902.0MHz sent=10/10 elapsed=22799ms window=35000ms
+[02:35:56.000] [RX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:35:59.000] [RX] pkt=1/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.5 freqErr=-324.8 ts=0
+[02:36:01.000] [RX] pkt=2/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-328.2 ts=2545
+[02:36:04.000] [RX] pkt=3/10 SF12 freq=902.0 origin=0xBB rssi=-25.0 snr=4.2 freqErr=-324.8 ts=5088
+[02:36:07.000] [RX] pkt=4/10 SF12 freq=902.0 origin=0xBB rssi=-23.0 snr=4.5 freqErr=-320.4 ts=7631
+[02:36:09.000] [RX] pkt=5/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-318.0 ts=10175
+[02:36:12.000] [RX] pkt=6/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-314.1 ts=12719
+[02:36:14.000] [RX] pkt=7/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-312.7 ts=15263
+[02:36:17.000] [RX] pkt=8/10 SF12 freq=902.0 origin=0xBB rssi=-23.0 snr=4.0 freqErr=-310.7 ts=17806
+[02:36:19.000] [RX] pkt=9/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-309.3 ts=20349
+[02:36:22.000] [RX] pkt=10/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.8 freqErr=-307.3 ts=22894
+[02:36:31.000] [RX-END] SF12 902.0MHz recv=10/10 crc_bad=0 err=0 PER=0.0%
+[02:36:31.000] [RECONFIG] SF10 902.6MHz LDRO=OFF en 1ms
+[02:36:33.000] [TX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:36:33.000] [TX] pkt=1/10 toa=566ms ok
+[02:36:33.000] [TX] pkt=2/10 toa=566ms ok
+[02:36:33.000] [TX] pkt=3/10 toa=566ms ok
+[02:36:33.000] [TX] pkt=4/10 toa=566ms ok
+[02:36:33.000] [TX] pkt=5/10 toa=566ms ok
+[02:36:33.000] [TX] pkt=6/10 toa=566ms ok
+[02:36:33.000] [TX] pkt=7/10 toa=566ms ok
+[00:05:48.175] [TX] pkt=8/10 toa=566ms ok
+[00:05:48.781] [TX] pkt=9/10 toa=566ms ok
+[00:05:49.387] [TX] pkt=10/10 toa=566ms ok
+[00:05:49.387] [TX-END] SF10 902.6MHz sent=10/10 elapsed=6020ms window=10000ms
+[02:36:43.000] [RX-START] SF10 902.6MHz LDRO=OFF ventana=10000ms
+[02:36:45.000] [RX] pkt=2/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=7.8 freqErr=-312.9 ts=672
+[02:36:46.000] [RX] pkt=3/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-316.8 ts=1341
+[02:36:47.000] [RX] pkt=4/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.2 freqErr=-314.8 ts=2011
+[02:36:47.000] [RX] pkt=5/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=8.0 freqErr=-316.8 ts=2681
+[02:36:48.000] [RX] pkt=6/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.8 freqErr=-314.8 ts=3350
+[02:36:49.000] [RX] pkt=7/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.0 freqErr=-312.9 ts=4020
+[02:36:49.000] [RX] pkt=8/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=7.8 freqErr=-312.9 ts=4690
+[02:36:50.000] [RX] pkt=9/10 SF10 freq=902.6 origin=0xBB rssi=-24.0 snr=8.2 freqErr=-314.8 ts=5360
+[02:36:51.000] [RX] pkt=10/10 SF10 freq=902.6 origin=0xBB rssi=-25.0 snr=7.5 freqErr=-312.9 ts=6030
+[02:36:53.000] [RX-END] SF10 902.6MHz recv=9/10 crc_bad=0 err=0 PER=10.0%
+[02:36:53.000] [RECONFIG] SF8 903.2MHz LDRO=OFF en 1ms
+[02:36:55.000] [TX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:36:55.000] [TX] pkt=1/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=2/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=3/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=4/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=5/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=6/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=7/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=8/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=9/10 toa=171ms ok
+[02:36:55.000] [TX] pkt=10/10 toa=171ms ok
+[02:36:55.000] [TX-END] SF8 903.2MHz sent=10/10 elapsed=2071ms window=4000ms
+[02:37:00.000] [RX-START] SF8 903.2MHz LDRO=OFF ventana=4000ms
+[02:37:04.000] [RX-END] SF8 903.2MHz recv=0/10 crc_bad=0 err=0 PER=100.0%
+[02:37:04.000] [LAP] vuelta=3 completada, reconfigurando a SF12/902.0MHz para slot 0
+[02:37:05.000] [SYNC] resync drift_ms=200 t0_local ajustado a 4294924430
+[02:37:05.000] [RECONFIG] SF12 902.0MHz LDRO=ON en 1ms
+[02:37:05.000] [LAP] vuelta=4 i_start=0 elapsed_ms=418022
+[02:37:05.000] [TX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:37:05.000] [TX] pkt=1/10 toa=2244ms ok
+[02:37:05.000] [TX] pkt=2/10 toa=2243ms ok
+[00:06:22.000] [TX] pkt=3/10 toa=2243ms ok
+[00:06:24.284] [TX] pkt=4/10 toa=2243ms ok
+[00:06:26.568] [TX] pkt=5/10 toa=2243ms ok
+[00:06:28.852] [TX] pkt=6/10 toa=2243ms ok
+[00:06:31.136] [TX] pkt=7/10 toa=2243ms ok
+[00:06:33.420] [TX] pkt=8/10 toa=2243ms ok
+[00:06:35.704] [TX] pkt=9/10 toa=2243ms ok
+[00:06:37.988] [TX] pkt=10/10 toa=2243ms ok
+[00:06:37.988] [TX-END] SF12 902.0MHz sent=10/10 elapsed=22799ms window=35000ms
+[02:37:40.000] [RX-START] SF12 902.0MHz LDRO=ON ventana=35000ms
+[02:37:43.000] [RX] pkt=1/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-322.8 ts=1
+[02:37:46.000] [RX] pkt=2/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-324.8 ts=2544
+[02:37:48.000] [RX] pkt=3/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-320.4 ts=5088
+[02:37:51.000] [RX] pkt=4/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-319.0 ts=7632
+[02:37:53.000] [RX] pkt=5/10 SF12 freq=902.0 origin=0xBB rssi=-23.0 snr=4.5 freqErr=-316.1 ts=10176
+[02:37:56.000] [RX] pkt=6/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-314.6 ts=12720
+[02:37:59.000] [RX] pkt=7/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.5 freqErr=-312.2 ts=15263
+[02:38:01.000] [RX] pkt=8/10 SF12 freq=902.0 origin=0xBB rssi=-24.0 snr=4.2 freqErr=-311.2 ts=17806

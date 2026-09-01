@@ -1,0 +1,1045 @@
+/*
+ * test_sync_windows.c
+ *
+ * Prueba de ventanas TX/RX sincronizadas por GPS entre este gateway
+ * (Raspberry Pi CM4 + HAT SX1303 / SX1250) y un nodo T3S3 (ESP32-S3 + SX1262).
+ *
+ * Ambos dispositivos comparten el mismo schedule hardcodeado (SCHEDULE[]).
+ * El schedule se trata como un CICLO que se repite indefinidamente cada
+ * SCHEDULE_CYCLE_MS (104400ms), anclado a un eje de tiempo absoluto (el
+ * epoch UTC) -- no a "cuando arranco el programa". Gracias a eso, el
+ * gateway y el T3S3 pueden encenderse en cualquier momento, cada uno por su
+ * lado, y cada uno:
+ *   1. Averigua la hora UTC exacta por GPS.
+ *   2. Calcula en que punto del ciclo de 104400ms esta esa hora ("fase").
+ *   3. Busca cual es la PROXIMA ventana activa (TX o RX) que arranca desde
+ *      cero a partir de esa fase -- nunca se une a la mitad de una ventana
+ *      en curso.
+ *   4. Espera con precision a ese instante y a partir de ahi ejecuta el
+ *      resto del ciclo, y cuando el ciclo termina vuelve a arrancar el
+ *      siguiente, para siempre (hasta Ctrl+C).
+ * Como los dos dispositivos calculan la fase contra el mismo eje absoluto
+ * (UTC), terminan uniendose al mismo punto del ciclo sin necesidad de
+ * coordinarse entre si ni de encenderse al mismo tiempo.
+ *
+ * Estructura del archivo (de arriba a abajo):
+ *   1. Parametros fijos y tabla SCHEDULE[]           (que se hace y cuando)
+ *   2. Utilidades de tiempo y logging                (helpers chicos)
+ *   3. Configuracion del concentrador SX1302/SX1250   (lgw_*_setconf)
+ *   4. Sincronizacion GPS y calculo del punto de union (sync_with_gps)
+ *   5. Ventanas TX / RX                                (el trabajo real de radio)
+ *   6. Estadisticas acumuladas y reporte
+ *   7. main() -> orquesta todo lo anterior en el loop infinito de ciclos
+ */
+
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <signal.h>
+#include <errno.h>
+
+#include "loragw_hal.h"   /* API principal del concentrador: lgw_start, lgw_send, lgw_receive... */
+#include "loragw_gps.h"   /* API de GPS del HAL: lgw_gps_enable, lgw_parse_nmea, lgw_gps_get */
+#include "loragw_aux.h"   /* wait_ms() / wait_us(): sleeps con precision de milisegundos */
+
+/* RESET_SCRIPT se define desde el Makefile (-DRESET_SCRIPT="...") apuntando
+   a sx1302_hal/libloragw/reset_lgw.sh, que resetea fisicamente el chip
+   SX1302 por GPIO (via pinctrl) antes de cada lgw_start(). El #ifndef es
+   solo un fallback por si alguna vez se compila este .c sin el Makefile. */
+#ifndef RESET_SCRIPT
+#define RESET_SCRIPT "reset_lgw.sh"
+#endif
+
+/* -------------------------------------------------------------------------- */
+/* --- PARAMETROS FIJOS DEL ENLACE ------------------------------------------- */
+
+#define GW_RF_CHAIN         0       /* cadena de RF "por defecto" (solo se usa para lgw_board_setconf/clksrc); RX y TX usan ambas cadenas, ver mas abajo */
+#define GW_TX_POWER_DBM     14      /* potencia TX del gateway; ajustable con solo cambiar esta constante */
+#define PAYLOAD_SIZE        38      /* tamano fijo de payload en bytes, ver build_tx_payload() */
+#define PKT_PER_WINDOW      10      /* cuantos paquetes se mandan/esperan por cada ventana TX o RX */
+#define INTER_PKT_GAP_MS    40      /* pausa entre el fin de un paquete TX y el inicio del siguiente */
+
+#define GPS_DEFAULT_PORT    "/dev/serial0"  /* puerto serie del GPS L76K si no se pasa por argv[1] */
+
+/* Los dos radios SX1250 quedan SIEMPRE encendidos, cada uno con su LO fijo
+   (nunca se retunean durante la ejecucion -- ver configure_dual_radio_rx()):
+     Radio 0: centro 902.3 MHz -> canales 0-3: 902.0/902.2/902.4/902.6 MHz
+     Radio 1: centro 903.1 MHz -> canales 4-7: 902.8/903.0/903.2/903.4 MHz
+   El downlink (TX del gateway) hace hopping entre 902.0/902.6/903.2 MHz
+   (canales 0, 3 y 6), eligiendo dinamicamente por que radio sale segun la
+   frecuencia (ver rf_chain_for_freq()). */
+#define RADIO0_FREQ_HZ      902300000u  /* LO radio 0 (canales 0-3) */
+#define RADIO1_FREQ_HZ      903100000u  /* LO radio 1 (canales 4-7) */
+
+/* -------------------------------------------------------------------------- */
+/* --- SCHEDULE (identico en gateway y T3S3) --------------------------------- */
+
+/* Roles posibles de cada extremo del enlace durante un slot */
+#define ROLE_IDLE 0   /* nadie transmite/escucha (slots de guarda) */
+#define ROLE_TX   1
+#define ROLE_RX   2
+
+/* Tipo de slot de guarda (separador entre slots activos). Como ambos radios
+   quedan siempre encendidos en sus LO fijos (RADIO0_FREQ_HZ/RADIO1_FREQ_HZ),
+   ninguna guarda necesita ya reconfigurar el concentrador -- toda guarda es
+   simplemente una pausa donde ambos extremos invierten sus roles TX/RX. */
+#define GUARD_NONE  0   /* no es guarda, es un slot ACTIVO de TX/RX (una "ventana") */
+#define GUARD_ROLE  1   /* pausa: solo cambian los roles TX<->RX, sin tocar hardware */
+
+/* Una fila del schedule. offset_ms/duration_ms son siempre relativos al
+   INICIO DEL CICLO (fase 0), nunca a un slot anterior -- eso es lo que
+   permite comparar contra elapsed_ms() directamente (una vez conocido en
+   que vuelta del ciclo estamos) y evitar que el drift se acumule slot a
+   slot. Ver find_join_point() y el loop de vueltas en main(). */
+typedef struct {
+    uint32_t offset_ms;     /* inicio del slot, en ms desde el inicio del ciclo */
+    uint32_t duration_ms;   /* duracion del slot */
+    uint8_t  sf;            /* spreading factor (5..12); sin uso en slots de guarda */
+    float    freq_mhz;      /* frecuencia central; sin uso en slots de guarda */
+    bool     ldro;          /* low data rate optimize -- solo informativo, ver nota mas abajo */
+    uint8_t  t3s3_role;     /* rol del nodo T3S3 en este slot (no lo usamos aca, es documentacion) */
+    uint8_t  gw_role;       /* rol de ESTE gateway en el slot: ROLE_TX / ROLE_RX / ROLE_IDLE */
+    uint8_t  guard_type;    /* GUARD_NONE si es una ventana activa, o el tipo de guarda */
+} schedule_slot_t;
+
+/* NOTA sobre "ldro": el HAL de sx1302 no tiene ningun campo para forzar
+   LDRO a mano (ni en lgw_pkt_tx_s ni en lgw_conf_rxif_s) -- el propio chip
+   SX1302 lo activa solo cuando el simbolo dura mas de 16ms (en la practica,
+   SF11/SF12 a 125kHz). Por eso el campo se guarda en la tabla y se loguea,
+   pero no se usa para configurar nada. */
+static const schedule_slot_t SCHEDULE[] = {
+    /* offset  dur    SF  freq(MHz) ldro   t3s3_role  gw_role    guard */
+    {     0, 35000, 12, 902.0, true,  ROLE_TX,   ROLE_RX,   GUARD_NONE  }, /* ciclo 1: T3S3 TX, GW escucha */
+    { 35000,   800,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  }, /*   guarda: se intercambian los roles */
+    { 35800, 35000, 12, 902.0, true,  ROLE_RX,   ROLE_TX,   GUARD_NONE  }, /*   T3S3 escucha, GW transmite */
+    { 70800,  2000,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  }, /*   guarda: cambia SF y frecuencia de hop (sin tocar hardware) */
+    { 72800, 10000, 10, 902.6, false, ROLE_TX,   ROLE_RX,   GUARD_NONE  }, /* ciclo 2: SF10 @ 902.6MHz */
+    { 82800,   800,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  },
+    { 83600, 10000, 10, 902.6, false, ROLE_RX,   ROLE_TX,   GUARD_NONE  },
+    { 93600,  2000,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  },
+    { 95600,  4000,  8, 903.2, false, ROLE_TX,   ROLE_RX,   GUARD_NONE  }, /* ciclo 3: SF8 @ 903.2MHz */
+    { 99600,   800,  0,   0.0, false, ROLE_IDLE, ROLE_IDLE, GUARD_ROLE  },
+    {100400,  4000,  8, 903.2, false, ROLE_RX,   ROLE_TX,   GUARD_NONE  },
+};
+#define SCHEDULE_LEN 11
+
+/* Duracion de UN ciclo completo (offset+duration del ultimo slot). El
+   schedule ya no es "una corrida unica de tantos ms" -- es el periodo de
+   un ciclo que se repite sin fin. Ver find_join_point() y el loop de
+   vueltas ("laps") en main(). */
+#define SCHEDULE_CYCLE_MS 104400
+
+/* -------------------------------------------------------------------------- */
+/* --- ESTADO GLOBAL ---------------------------------------------------------- */
+
+/* Bandera que ponen los manejadores de SIGINT/SIGTERM (Ctrl+C). Todos los
+   loops del programa la revisan para poder cortar limpio (lgw_stop(),
+   reset del chip, reporte final) en vez de terminar a la fuerza. */
+static volatile sig_atomic_t g_exit_requested = 0;
+
+/* Instante CLOCK_MONOTONIC que representa la FASE 0 del eje de vueltas (el
+   instante teorico, quiza en el pasado, en que habria arrancado la vuelta
+   "numero 0" si el programa hubiese estado corriendo desde siempre). Se
+   llena una unica vez en sync_with_gps() -- a partir de ahi TODO el timing
+   del programa se mide contra este valor (ver elapsed_ms() mas abajo), sin
+   volver a tocar el GPS. Para la vuelta L, el slot con offset_ms=X arranca
+   en elapsed_ms() == L*SCHEDULE_CYCLE_MS + X. */
+static struct timespec g_t0_local;
+
+/* Un registro por cada ventana TX/RX activa que se ejecuto (se usa una sola
+   vez, para plegarlo enseguida en las estadisticas acumuladas -- no se
+   guarda una lista, porque con el loop infinito la lista creceria sin
+   limite). */
+typedef struct {
+    int          slot_index;
+    uint8_t      sf;
+    float        freq_mhz;
+    const char  *gw_role_str;   /* "TX" o "RX", solo para imprimir */
+    uint32_t     expected;      /* paquetes esperados (siempre PKT_PER_WINDOW) */
+    uint32_t     rx_ok;         /* paquetes recibidos con CRC valido (si fue ventana RX) */
+    uint32_t     rx_crc_bad;    /* paquetes recibidos con CRC invalido (si fue ventana RX) */
+    uint32_t     tx_sent;       /* paquetes efectivamente enviados (si fue ventana TX) */
+} window_stats_t;
+
+/* Estadisticas ACUMULADAS desde que arranco el programa (no por vuelta):
+   como el ciclo se repite sin fin, no tiene sentido guardar un registro
+   por cada ventana -- se van sumando aca apenas termina cada ventana, y se
+   imprimen al cierre de cada vuelta y al salir. */
+typedef struct {
+    uint64_t windows_rx;
+    uint64_t windows_tx;
+    uint64_t rx_ok_total;
+    uint64_t rx_bad_total;
+    uint64_t rx_expected_total;
+    uint64_t tx_sent_total;
+    uint64_t tx_expected_total;
+    int64_t  laps_completed;
+} running_stats_t;
+
+/* -------------------------------------------------------------------------- */
+/* --- UTILIDADES DE TIEMPO / LOG --------------------------------------------- */
+
+static void sig_handler(int signo) {
+    (void)signo;              /* no nos importa cual señal fue, solo que hay que salir */
+    g_exit_requested = 1;     /* set desde contexto de señal: por eso es sig_atomic_t */
+}
+
+/* Imprime una linea de log con el formato pedido:
+ *   [HH:MM:SS.mmm] [TAG] mensaje
+ * La hora es UTC (gmtime_r) para que sea directamente comparable con los
+ * timestamps GPS que aparecen en los logs de GPS-FIX/SYNC.
+ * Hace fflush() en cada linea para que funcione bien con:
+ *   ./test_sync_windows 2>&1 | tee gw_log.txt
+ * (si no, stdout quedaria bufferizado y el log no se veria en vivo). */
+static void log_line(const char *tag, const char *fmt, ...) {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    struct tm tmv;
+    gmtime_r(&ts.tv_sec, &tmv);
+    int ms = (int)(ts.tv_nsec / 1000000);
+
+    printf("[%02d:%02d:%02d.%03d] [%s] ", tmv.tm_hour, tmv.tm_min, tmv.tm_sec, ms, tag);
+    va_list ap;
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
+    va_end(ap);
+    printf("\n");
+    fflush(stdout);
+}
+
+/* Diferencia entre dos timespec, en milisegundos (b - a). Se usa en todos
+   lados en vez de restar tv_sec/tv_nsec a mano para no repetir la logica
+   de "pedir prestado" cuando tv_nsec de b es menor que el de a. */
+static double ms_between(struct timespec a, struct timespec b) {
+    return (b.tv_sec - a.tv_sec) * 1000.0 + (b.tv_nsec - a.tv_nsec) / 1e6;
+}
+
+/* Milisegundos transcurridos desde la fase 0 del eje de vueltas (g_t0_local).
+   Esta es LA funcion de referencia de todo el schedule: cada vez que el
+   programa necesita saber "en que momento estamos", llama a esto -- nunca
+   acumula sumas de duraciones de slots anteriores, para que un pequeño
+   atraso en un slot no se arrastre a los siguientes. Como el ciclo se
+   repite, este valor sigue creciendo mas alla de SCHEDULE_CYCLE_MS en cada
+   vuelta sucesiva (no se resetea entre vueltas). */
+static double elapsed_ms(void) {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return ms_between(g_t0_local, now);
+}
+
+/* Suma "ms" (puede tener fraccion de milisegundo, y puede ser negativo) a
+   un timespec, normalizando tv_nsec para que quede siempre en [0, 1e9). Se
+   usa para proyectar un instante UTC del GPS a un instante CLOCK_MONOTONIC
+   equivalente (en cualquier direccion, hacia adelante o hacia atras). */
+static void monotonic_add_ms(struct timespec *ts, double ms) {
+    long sec = (long)(ms / 1000.0);
+    double rem_ms = ms - (double)sec * 1000.0;
+    ts->tv_sec += sec;
+    ts->tv_nsec += (long)(rem_ms * 1e6);
+    while (ts->tv_nsec >= 1000000000L) { ts->tv_nsec -= 1000000000L; ts->tv_sec += 1; }
+    while (ts->tv_nsec < 0)            { ts->tv_nsec += 1000000000L; ts->tv_sec -= 1; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* --- RESET FISICO DEL CONCENTRADOR ------------------------------------------ */
+
+/* Corre sx1302_hal/libloragw/reset_lgw.sh (via `sh`, no requiere que tenga
+   el bit +x) con el argumento "start" o "stop". Ese script mueve GPIOs por
+   pinctrl para resetear/alimentar el chip SX1302 -- es el mismo patron que
+   usan test_loragw_hal_tx.c / test_loragw_hal_rx.c del HAL: siempre hay que
+   correrlo antes de cada lgw_start(), no solo la primera vez.
+   Mide cuanto tarda el propio script (interesa para el reporte de tiempos
+   de reconfiguracion). */
+static void run_reset_script(const char *arg, double *out_ms) {
+    struct timespec a, b;
+    clock_gettime(CLOCK_MONOTONIC, &a);
+    char cmd[512];
+    snprintf(cmd, sizeof cmd, "sh %s %s >/dev/null 2>&1", RESET_SCRIPT, arg);
+    int rc = system(cmd);
+    clock_gettime(CLOCK_MONOTONIC, &b);
+    double ms = ms_between(a, b);
+    if (out_ms) {
+        *out_ms = ms;
+    }
+    if (rc != 0) {
+        log_line("GW-RECONFIG-START-HAL", "aviso: 'reset_lgw.sh %s' devolvio %d (%.0fms)", arg, rc, ms);
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* --- CONFIGURACION DEL CONCENTRADOR (SX1303 / radios SX1250) --------------- */
+
+/* Arma la tabla de ganancias TX que el HAL necesita para saber que valores
+   de pa_gain/pwr_idx corresponden a cada dBm de salida. lgw_send() busca en
+   esta tabla, con rf_power=X, la entrada de mayor potencia que sea <= X.
+   Los valores de esta tabla NO son inventados: son los mismos que trae
+   sx1302_hal/packet_forwarder/global_conf.json.sx1250.US915 (config de
+   referencia de Semtech para radios SX1250 en banda 903-928MHz, que cubre
+   nuestras 3 frecuencias de hop de prueba: 902.0/902.6/903.2MHz). */
+static void build_tx_gain_lut(struct lgw_tx_gain_lut_s *lut) {
+    static const struct { int8_t rf_power; uint8_t pa_gain; uint8_t pwr_idx; } table[] = {
+        {12, 0, 15}, {13, 0, 16}, {14, 0, 17}, {15, 0, 19},
+        {16, 0, 20}, {17, 0, 22}, {18, 1,  1}, {19, 1,  2},
+        {20, 1,  3}, {21, 1,  4}, {22, 1,  5}, {23, 1,  6},
+        {24, 1,  7}, {25, 1,  9}, {26, 1, 11}, {27, 1, 14},
+    };
+    const size_t n = sizeof(table) / sizeof(table[0]);
+
+    memset(lut, 0, sizeof *lut);
+    lut->size = (uint8_t)n;
+    for (size_t i = 0; i < n; i++) {
+        lut->lut[i].rf_power = table[i].rf_power;
+        lut->lut[i].pa_gain  = table[i].pa_gain;
+        lut->lut[i].pwr_idx  = table[i].pwr_idx;
+        /* mix_gain solo aplica a radios sx125x, pero el HAL igual valida
+           que este en el rango [5,15] aunque el radio sea SX1250, asi que
+           hay que ponerle algo valido aunque no se use. */
+        lut->lut[i].mix_gain = 5;
+    }
+}
+
+/* Configuracion que se hace UNA sola vez al arrancar el programa: el tipo de
+   interfaz (SPI), el sync word publico (0x34, requerido por el enunciado) y
+   la tabla de potencias TX de arriba -- en AMBAS cadenas de RF, porque el
+   downlink puede salir por cualquiera de los dos radios segun la frecuencia
+   de hop (ver rf_chain_for_freq()). */
+static int configure_board_and_txlut(void) {
+    struct lgw_conf_board_s boardconf;
+    memset(&boardconf, 0, sizeof boardconf);
+    boardconf.lorawan_public = true; /* true -> sync word 0x34 (publico); false -> 0x12 (privado) */
+    boardconf.clksrc = GW_RF_CHAIN;  /* que cadena de RF provee el reloj de referencia al SX1302 */
+    boardconf.full_duplex = false;
+    boardconf.com_type = LGW_COM_SPI;
+    strncpy(boardconf.com_path, "/dev/spidev0.0", sizeof boardconf.com_path - 1);
+    if (lgw_board_setconf(&boardconf) != LGW_HAL_SUCCESS) {
+        log_line("ERROR", "lgw_board_setconf fallo");
+        return -1;
+    }
+
+    struct lgw_tx_gain_lut_s txlut;
+    build_tx_gain_lut(&txlut);
+    for (uint8_t chain = 0; chain < LGW_RF_CHAIN_NB; chain++) {
+        if (lgw_txgain_setconf(chain, &txlut) != LGW_HAL_SUCCESS) {
+            log_line("ERROR", "lgw_txgain_setconf(chain %u) fallo", chain);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+/* Configura AMBAS cadenas de RF y los 8 canales de RX. Se llama UNA sola
+ * vez, al arrancar el programa -- nunca se vuelve a llamar durante la
+ * ejecucion, porque los dos LO quedan fijos para siempre en
+ * RADIO0_FREQ_HZ/RADIO1_FREQ_HZ (a diferencia del diseño anterior, que
+ * retuneaba un unico LO por ciclo).
+ *
+ * RX via multi-SF (IF chains 0-7), como un gateway LoRaWAN real: en vez de
+ * forzar un unico SF "puro" con el canal de servicio (IF chain 8, que ya
+ * no se usa), se habilitan los 8 correladores multi-SF, que auto-detectan
+ * cualquier SF5-SF12 -- el bitmask de SFs habilitados para esos
+ * correladores (CONTEXT_DEMOD.multisf_datarate en el HAL) se deja en su
+ * default (LGW_MULTI_SF_EN = 0xFF, todos), porque nunca se llama a
+ * lgw_demod_setconf(). Igual que un gateway real, el concentrador no
+ * necesita saber de antemano que SF va a usar el nodo.
+ *
+ * Los 8 canales se reparten 4 por radio, cada 200kHz alrededor de su LO
+ * (-300k/-100k/+100k/+300k Hz): canales 0-3 sobre el radio 0 (902.0/902.2/
+ * 902.4/902.6 MHz) y canales 4-7 sobre el radio 1 (902.8/903.0/903.2/
+ * 903.4 MHz). ifconf.datarate se deja en DR_LORA_SF7 solo para pasar la
+ * validacion del HAL (IS_LORA_DR) -- en canales multi-SF ese valor no se
+ * usa para nada, el HAL solo commitea enable/rf_chain/freq_hz.
+ */
+static int configure_dual_radio_rx(void) {
+    static const uint32_t RADIO_FREQ_HZ[LGW_RF_CHAIN_NB] = { RADIO0_FREQ_HZ, RADIO1_FREQ_HZ };
+
+    for (uint8_t chain = 0; chain < LGW_RF_CHAIN_NB; chain++) {
+        struct lgw_conf_rxrf_s rfconf;
+        memset(&rfconf, 0, sizeof rfconf);
+        rfconf.enable = true;
+        rfconf.freq_hz = RADIO_FREQ_HZ[chain];
+        rfconf.type = LGW_RADIO_TYPE_SX1250;
+        rfconf.rssi_offset = -215.4f;  /* offset de calibracion tipico para SX1250, de la config de referencia */
+        rfconf.tx_enable = true;       /* ambas cadenas pueden transmitir, ver rf_chain_for_freq() */
+        rfconf.single_input_mode = false;
+        if (lgw_rxrf_setconf(chain, &rfconf) != LGW_HAL_SUCCESS) {
+            log_line("ERROR", "lgw_rxrf_setconf(chain %u) fallo", chain);
+            return -1;
+        }
+    }
+
+    /* 8 canales multi-SF (IF chains 0-7): los primeros 4 sobre el radio 0,
+       los ultimos 4 sobre el radio 1, mismo patron de offsets en ambos. */
+    static const int32_t  CH_IF_HZ[LGW_MULTI_NB]    = { -300000, -100000, 100000, 300000,
+                                                          -300000, -100000, 100000, 300000 };
+    static const uint8_t  CH_RF_CHAIN[LGW_MULTI_NB] = { 0, 0, 0, 0, 1, 1, 1, 1 };
+
+    struct lgw_conf_rxif_s ifconf;
+    for (int i = 0; i < LGW_MULTI_NB; i++) {
+        memset(&ifconf, 0, sizeof ifconf);
+        ifconf.enable = true;
+        ifconf.rf_chain = CH_RF_CHAIN[i];
+        ifconf.freq_hz = CH_IF_HZ[i];
+        ifconf.bandwidth = BW_125KHZ;
+        ifconf.datarate = DR_LORA_SF7;
+        if (lgw_rxif_setconf(i, &ifconf) != LGW_HAL_SUCCESS) {
+            log_line("ERROR", "lgw_rxif_setconf(canal multi-SF %d) fallo", i);
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+/* Elige por que radio sale un paquete TX segun su frecuencia: el que tenga
+   el LO mas cercano (con el plan de 3 frecuencias de hop -- 902.0/902.6 MHz
+   caen dentro del radio 0, 903.2 MHz dentro del radio 1 -- la eleccion es
+   inambigua). */
+static uint8_t rf_chain_for_freq(uint32_t freq_hz) {
+    int64_t d0 = llabs((int64_t)freq_hz - (int64_t)RADIO0_FREQ_HZ);
+    int64_t d1 = llabs((int64_t)freq_hz - (int64_t)RADIO1_FREQ_HZ);
+    return (d0 <= d1) ? 0 : 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* --- SINCRONIZACION GPS Y PUNTO DE UNION ------------------------------------ */
+
+/* Dada una "fase" (posicion dentro del ciclo, en ms, en [0, SCHEDULE_CYCLE_MS)),
+ * busca la PROXIMA ventana activa (guard_type == GUARD_NONE) que arranca
+ * despues de esa fase -- nunca una guarda, y nunca a mitad de una ventana
+ * ya empezada. Si no queda ninguna ventana activa mas en este ciclo (la
+ * fase ya paso el inicio de la ultima), el punto de union es el slot 0 del
+ * PROXIMO ciclo (que siempre es una ventana activa, por construccion de la
+ * tabla). *lap_out devuelve 0 si el punto de union cae en este mismo
+ * ciclo, o 1 si hay que esperar al que viene. */
+static int find_join_point(int64_t phase_ms, int64_t *lap_out) {
+    for (int k = 0; k < SCHEDULE_LEN; k++) {
+        if (SCHEDULE[k].guard_type == GUARD_NONE && (int64_t)SCHEDULE[k].offset_ms > phase_ms) {
+            *lap_out = 0;
+            return k;
+        }
+    }
+    *lap_out = 1;
+    return 0; /* SCHEDULE[0] siempre es una ventana activa */
+}
+
+/* Una sentencia $xxRMC tiene la forma:
+ *   $GPRMC,083559.34,A,4717.11437,N,00833.91522,E,0.004,77.52,091202,,,A*00
+ *           ^campo1  ^campo2 (status: 'A'=valido con fix, 'V'=sin fix)
+ * lgw_parse_nmea() ya valida el checksum y decodifica la hora/fecha
+ * internamente (accesible despues via lgw_gps_get()), pero no expone el
+ * status de fix en su API publica -- por eso lo extraemos nosotros mismos
+ * con esta funcion chiquita, contando comas hasta la segunda. */
+static bool extract_rmc_status(const char *line, size_t len, char *status_out) {
+    int comma = 0;
+    for (size_t i = 0; i < len; i++) {
+        if (line[i] == ',') {
+            comma++;
+            if (comma == 2) {
+                if (i + 1 < len) {
+                    *status_out = line[i + 1];
+                    return true;
+                }
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+/* Corazon de la sincronizacion. Bloquea hasta que:
+ *   1) el GPS entrega un fix valido (status 'A' o 'D') con hora UTC, y
+ *   2) llega el instante de union: el inicio de la proxima ventana activa
+ *      del ciclo (ver find_join_point() arriba).
+ * Como el T3S3 corre exactamente la misma logica con su propio GPS, ambos
+ * dispositivos calculan el mismo punto de union de forma independiente,
+ * sin necesidad de comunicarse entre si -- y no importa en que momento
+ * absoluto se haya encendido cada uno.
+ *
+ * Detalle tecnico de la sincronizacion fina: cada vez que llega una nueva
+ * sentencia RMC valida, se guarda el par (ref_utc, ref_mono) = (hora UTC
+ * reportada por el GPS, CLOCK_MONOTONIC en ese mismo instante). Con ese par
+ * se proyecta el instante de union (que es un instante UTC) a un instante
+ * equivalente en CLOCK_MONOTONIC (target_mono) -- y se duerme con precision
+ * hasta ahi con clock_nanosleep() en modo absoluto. Esto se recalcula en
+ * cada sentencia RMC nueva para ir afinando el objetivo.
+ *
+ * Devuelve, ademas del instante local capturado (*t0_out = fase 0 del eje
+ * de vueltas, no el instante de union en si), en que vuelta (*lap_out) y en
+ * que indice de SCHEDULE[] (*join_index_out) hay que arrancar a ejecutar.
+ * Retorna 0 en exito, o -1 si se pidio salir (Ctrl+C) antes de lograrlo. */
+static int sync_with_gps(const char *gps_port, struct timespec *t0_out, int64_t *lap_out, int *join_index_out) {
+    int gps_fd = -1;
+    if (lgw_gps_enable((char *)gps_port, "", 0, &gps_fd) != LGW_GPS_SUCCESS) {
+        log_line("GPS-FIX", "error no se pudo abrir puerto=%s", gps_port);
+        return -1;
+    }
+    log_line("GPS-FIX", "puerto=%s baud=9600 abierto", gps_port);
+
+    /* Buffer circular chico donde se van acumulando los bytes crudos leidos
+       del puerto serie hasta formar lineas completas terminadas en '\n'.
+       El patron de lectura (read() de a LGW_GPS_MIN_MSG_SIZE bytes, buscar
+       '\n', descartar lo ya procesado) es el mismo que usa el thread_gps()
+       del packet forwarder original del HAL. */
+    char serial_buff[128];
+    size_t wr_idx = 0;
+    memset(serial_buff, 0, sizeof serial_buff);
+
+    bool have_ref = false;
+    struct timespec ref_utc = {0}, ref_mono = {0};   /* ultimo par (hora GPS valida, monotonic local) */
+
+    bool join_computed = false;
+    int64_t join_lap = 0;
+    int join_index = 0;
+    double join_axis_ms = 0.0;   /* = join_lap*SCHEDULE_CYCLE_MS + SCHEDULE[join_index].offset_ms, fijo una vez calculado */
+    struct timespec target_mono;
+    int last_countdown_sec = -1; /* para no repetir el mismo segundo en el log de COUNTDOWN */
+
+    while (!g_exit_requested) {
+        size_t rd_idx = 0, frame_end_idx = 0;
+
+        /* Lectura bloqueante: como el puerto se configuro en modo no
+           canonico con VMIN=LGW_GPS_MIN_MSG_SIZE (ver lgw_gps_enable en el
+           HAL), read() espera hasta tener al menos esa cantidad de bytes.
+           Si llega una señal (Ctrl+C), read() vuelve con EINTR y el loop
+           revisa g_exit_requested en la condicion del while. */
+        ssize_t nb_char = read(gps_fd, serial_buff + wr_idx, LGW_GPS_MIN_MSG_SIZE);
+        if (nb_char <= 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            continue;
+        }
+        wr_idx += (size_t)nb_char;
+
+        /* Recorre el buffer buscando el caracter '$' (inicio de sentencia
+           NMEA) seguido de un '\n' (fin de linea) para extraer una trama
+           completa por vez. Lo que no forma una trama completa se deja en
+           el buffer para la proxima lectura. */
+        while (rd_idx < wr_idx) {
+            size_t frame_size = 0;
+
+            if (serial_buff[rd_idx] == (char)LGW_GPS_NMEA_SYNC_CHAR) {
+                char *nl = memchr(&serial_buff[rd_idx], 0x0a, wr_idx - rd_idx);
+                if (nl != NULL) {
+                    frame_size = (size_t)(nl - &serial_buff[rd_idx]) + 1;
+                    enum gps_msg msg = lgw_parse_nmea(&serial_buff[rd_idx], (int)frame_size);
+
+                    if (msg == NMEA_RMC) {
+                        char status = '?';
+                        extract_rmc_status(&serial_buff[rd_idx], frame_size, &status);
+
+                        /* lgw_gps_get() devuelve la hora UTC que el HAL ya
+                           parseo de esta misma sentencia (año/mes/dia/hora/
+                           min/seg -> struct timespec). Solo falla si nunca
+                           hubo una sentencia con hora valida. */
+                        struct timespec utc;
+                        if (lgw_gps_get(&utc, NULL, NULL, NULL) == LGW_GPS_SUCCESS) {
+                            struct tm tmv;
+                            gmtime_r(&utc.tv_sec, &tmv);
+                            bool valid = (status == 'A' || status == 'D'); /* A=autonomo, D=diferencial: ambos con fix */
+                            log_line("GPS-FIX", "status=%c utc=%02d:%02d:%02d fix=%s",
+                                     status, tmv.tm_hour, tmv.tm_min, tmv.tm_sec,
+                                     valid ? "valido" : "sin_fix");
+                            if (valid) {
+                                /* Actualizamos el par de referencia SOLO
+                                   cuando hay fix real -- con status 'V' el
+                                   GPS puede seguir mandando una hora
+                                   estimada, pero no es confiable para
+                                   sincronizar. */
+                                ref_utc = utc;
+                                clock_gettime(CLOCK_MONOTONIC, &ref_mono);
+                                have_ref = true;
+                            }
+                        } else {
+                            log_line("GPS-FIX", "status=%c sin_hora_valida_aun", status);
+                        }
+                    }
+                }
+            }
+
+            if (frame_size > 0) {
+                rd_idx += frame_size;
+                frame_end_idx = rd_idx;   /* recordamos hasta donde ya procesamos, para descartarlo abajo */
+            } else {
+                rd_idx++;  /* no era el inicio de una trama util: probamos con el siguiente byte */
+            }
+        }
+
+        /* Descarta del buffer todo lo ya procesado, corriendo el resto al principio. */
+        if (frame_end_idx > 0) {
+            memmove(serial_buff, serial_buff + frame_end_idx, wr_idx - frame_end_idx);
+            wr_idx -= frame_end_idx;
+        }
+        /* Si el buffer esta por llenarse sin haber encontrado un '\n'
+           (linea rara/corrupta), se descartan los bytes mas viejos para
+           no quedar trabados sin poder seguir leyendo. */
+        if ((sizeof(serial_buff) - wr_idx) < LGW_GPS_MIN_MSG_SIZE) {
+            size_t drop = LGW_GPS_MIN_MSG_SIZE;
+            memmove(serial_buff, serial_buff + drop, wr_idx - drop);
+            wr_idx -= drop;
+        }
+
+        /* Primera vez que tenemos un fix valido: calculamos el punto de
+           union UNA sola vez (no se recalcula despues, solo se refina la
+           proyeccion a CLOCK_MONOTONIC mas abajo con cada fix nuevo). */
+        if (have_ref && !join_computed) {
+            int64_t ref_utc_ms = (int64_t)ref_utc.tv_sec * 1000 + ref_utc.tv_nsec / 1000000;
+            int64_t phase_ms = ref_utc_ms % SCHEDULE_CYCLE_MS;
+
+            join_index = find_join_point(phase_ms, &join_lap);
+            join_axis_ms = (double)join_lap * SCHEDULE_CYCLE_MS + (double)SCHEDULE[join_index].offset_ms;
+            join_computed = true;
+
+            log_line("SYNC", "fase=%lldms union=slot%d SF%u %.1fMHz vuelta=%s",
+                     (long long)phase_ms, join_index, (unsigned)SCHEDULE[join_index].sf,
+                     SCHEDULE[join_index].freq_mhz, (join_lap == 0) ? "actual" : "siguiente");
+        }
+
+        if (join_computed) {
+            /* Proyecta el instante de union (fijo, en el eje de vueltas) al
+               reloj monotonico local usando el ultimo par (ref_utc,
+               ref_mono) disponible:
+                 target_mono = ref_mono + (join_axis_ms - fase_de_ref_utc)
+               El delta puede ser negativo si el instante ya paso -- eso se
+               resuelve solo en el chequeo de remain_ms <= 0 de abajo. */
+            int64_t ref_utc_ms = (int64_t)ref_utc.tv_sec * 1000 + ref_utc.tv_nsec / 1000000;
+            int64_t phase_now = ref_utc_ms % SCHEDULE_CYCLE_MS;
+            double delta_ms = join_axis_ms - (double)phase_now;
+
+            target_mono = ref_mono;
+            monotonic_add_ms(&target_mono, delta_ms);
+
+            struct timespec now;
+            clock_gettime(CLOCK_MONOTONIC, &now);
+            double remain_ms = ms_between(now, target_mono);
+            int remain_sec = (int)(remain_ms / 1000.0 + 0.5);
+
+            if (remain_ms <= 0.0) {
+                break;  /* ya deberiamos estar en el punto de union (o pasados) -> salimos a esperar el instante exacto */
+            }
+            if (remain_sec != last_countdown_sec) {
+                log_line("COUNTDOWN", "faltan %ds para el punto de union", remain_sec);
+                last_countdown_sec = remain_sec;
+            }
+        }
+    }
+
+    if (g_exit_requested) {
+        lgw_gps_disable(gps_fd);
+        return -1;
+    }
+
+    /* Espera de precision al instante exacto: clock_nanosleep en modo
+       ABSTIME no acumula el error de un sleep relativo (no cuenta el
+       tiempo que tarda en despertar y volver a dormir), asi que despierta
+       muy cerca del instante real target_mono. */
+    clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &target_mono, NULL);
+
+    /* t0_out tiene que representar la FASE 0 del eje de vueltas, no el
+       instante de union en si -- por eso se proyecta target_mono hacia
+       atras restando join_axis_ms (que puede ser varios segundos, o
+       incluso SCHEDULE_CYCLE_MS completo si join_lap==1). */
+    struct timespec cycle_zero = target_mono;
+    monotonic_add_ms(&cycle_zero, -join_axis_ms);
+    *t0_out = cycle_zero;
+    *lap_out = join_lap;
+    *join_index_out = join_index;
+
+    log_line("SYNC", "union alcanzada: slot%d (SF%u %.1fMHz), comienza la ejecucion",
+             join_index, (unsigned)SCHEDULE[join_index].sf, SCHEDULE[join_index].freq_mhz);
+
+    /* Ya no necesitamos el GPS: de aca en adelante todo el timing se maneja
+       con CLOCK_MONOTONIC local (elapsed_ms()), sin volver a leer el puerto serie. */
+    lgw_gps_disable(gps_fd);
+    return 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* --- VENTANAS TX / RX --------------------------------------------------------- */
+
+/* Arma el payload de 38 bytes de un paquete TX segun el formato pedido:
+ *   [0]     SF usado
+ *   [1-2]   frecuencia, uint16_t little-endian = freq_kHz - FREQ_BASE_KHZ
+ *   [3]     indice del paquete dentro de la ventana (0..9)
+ *   [4]     total de paquetes de la ventana (siempre PKT_PER_WINDOW)
+ *   [5-8]   timestamp relativo en ms desde el inicio de LA VENTANA (no del eje de vueltas)
+ *   [9]     0xBB, marca fija de "origen gateway"
+ *   [10-37] padding con 0x55 (28 bytes)
+ * El memset(...,0x55,...) inicial ya deja el padding puesto; despues solo
+ * se pisan los primeros 10 bytes con datos reales.
+ *
+ * NOTA sobre [1-2]: un uint16_t no alcanza para freq_kHz completo (902600
+ * para 902.6MHz desborda el maximo de 65535), asi que se guarda un offset:
+ * freq_kHz - FREQ_BASE_KHZ. Con FREQ_BASE_KHZ=900000 (900MHz) el rango
+ * representable es 900.000-965.535 MHz en pasos de 1kHz -- cubre toda la
+ * banda US915 (902-928MHz) con precision entera completa. El T3S3 debe
+ * reconstruir con freq_hz = (valor + 900000) * 1000. */
+#define FREQ_BASE_KHZ 900000u
+
+static void build_tx_payload(uint8_t *payload, uint8_t sf, float freq_mhz, uint8_t idx, uint8_t total, uint32_t rel_ms) {
+    memset(payload, 0x55, PAYLOAD_SIZE);
+    payload[0] = sf;
+    uint32_t freq_khz = (uint32_t)(freq_mhz * 1000.0f + 0.5f);
+    uint16_t freq_field = (uint16_t)(freq_khz - FREQ_BASE_KHZ);
+    memcpy(&payload[1], &freq_field, sizeof freq_field);  /* little-endian (arquitectura ARM), 2 bytes */
+    payload[3] = idx;
+    payload[4] = total;
+    memcpy(&payload[5], &rel_ms, sizeof rel_ms);  /* little-endian (arquitectura ARM), 4 bytes */
+    payload[9] = 0xBB;
+}
+
+/* Espera (polleando lgw_status cada 2ms) a que el modem TX quede en estado
+   TX_FREE, con un timeout para no bloquear el programa entero si algo sale
+   mal en el HAL/hardware. Se usa tanto ANTES de armar un paquete nuevo
+   (asegurarse que el modem esta libre) como DESPUES de lgw_send() (esperar
+   a que termine de salir por aire antes de mandar el siguiente). rf_chain
+   tiene que ser la misma cadena por la que se transmite (elegida con
+   rf_chain_for_freq()) -- consultar el estado de la cadena equivocada
+   devolveria TX_FREE aunque el otro radio siga transmitiendo. */
+static bool wait_tx_free(uint8_t rf_chain, double timeout_ms) {
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    for (;;) {
+        uint8_t status = TX_STATUS_UNKNOWN;
+        lgw_status(rf_chain, TX_STATUS, &status);
+        if (status == TX_FREE) {
+            return true;
+        }
+        if (g_exit_requested) {
+            return false;
+        }
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        if (ms_between(start, now) > timeout_ms) {
+            return false;  /* timeout: quien llama decide si eso es grave o no (loguea GW-TX-WARN) */
+        }
+        wait_ms(2);
+    }
+}
+
+/* Ventana en la que el gateway escucha (T3S3 transmite). Hace polling de
+ * lgw_receive() hasta que se cumple slot_end_ms (medido con elapsed_ms(),
+ * o sea desde la fase 0 del eje de vueltas -- asi la ventana cierra en el
+ * instante correcto aunque este loop haya arrancado un poquito tarde).
+ * lgw_receive() es no bloqueante: si no hay paquetes nuevos devuelve 0 y
+ * ahi se hace un sleep corto para no consumir CPU en un busy-loop.
+ *
+ * A diferencia del diseño anterior (un unico canal "activo" por ventana),
+ * ahora los 8 canales de ambos radios escuchan siempre en simultaneo (ver
+ * configure_dual_radio_rx()) -- slot->freq_mhz/slot->sf ya no describen la
+ * config del receptor, sino la frecuencia/SF que se espera del lado que
+ * transmite en esta ventana. Por eso cada paquete recibido loguea su propio
+ * radio/canal/frecuencia real (p->rf_chain, p->if_chain, p->freq_hz), que
+ * puede no coincidir exactamente con lo esperado si el transmisor uso otro
+ * canal. */
+static void gateway_receive_window(int slot_idx, const schedule_slot_t *slot, double slot_start_ms, double slot_end_ms, window_stats_t *stats) {
+    log_line("GW-RX-START", "slot=%d escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF%u %.1fMHz dur=%ums ldro=%s",
+             slot_idx, (unsigned)slot->sf, slot->freq_mhz, (unsigned)slot->duration_ms, slot->ldro ? "ON" : "OFF");
+
+    struct lgw_pkt_rx_s rxpkt[16];  /* lgw_receive puede devolver varios paquetes de una sola llamada */
+    uint32_t nb_ok = 0, nb_bad = 0;
+    int log_idx = 0;
+
+    while (!g_exit_requested && elapsed_ms() < slot_end_ms) {
+        int n = lgw_receive(16, rxpkt);
+        if (n <= 0) {
+            wait_ms(2);
+            continue;
+        }
+        for (int i = 0; i < n; i++) {
+            struct lgw_pkt_rx_s *p = &rxpkt[i];
+            double t_rel = elapsed_ms() - slot_start_ms;  /* timestamp relativo al INICIO DE LA VENTANA */
+            if (p->status == STAT_CRC_OK) {
+                nb_ok++;
+                log_line("GW-RX", "idx=%d radio=%u ch=%u freq=%.1fMHz sf=SF%u rssi=%.1f snr=%.1f size=%u t=%.0fms",
+                         log_idx++, p->rf_chain, p->if_chain, p->freq_hz / 1e6, (unsigned)p->datarate, p->rssis, p->snr, (unsigned)p->size, t_rel);
+            } else if (p->status == STAT_CRC_BAD) {
+                nb_bad++;
+                log_line("GW-RX", "CRC_BAD radio=%u ch=%u freq=%.1fMHz sf=SF%u rssi=%.1f size=%u t=%.0fms",
+                         p->rf_chain, p->if_chain, p->freq_hz / 1e6, (unsigned)p->datarate, p->rssis, (unsigned)p->size, t_rel);
+            }
+            /* otros valores de status (STAT_NO_CRC) se ignoran: no deberian
+               aparecer porque siempre transmitimos con CRC activado */
+        }
+    }
+
+    double per = 100.0 * (double)(PKT_PER_WINDOW - (int)nb_ok) / (double)PKT_PER_WINDOW;
+    if (per < 0.0) {
+        per = 0.0;
+    }
+    log_line("GW-RX-END", "slot=%d recibidos=%u crc_bad=%u esperados=%d PER=%.1f%%",
+             slot_idx, nb_ok, nb_bad, PKT_PER_WINDOW, per);
+
+    if (stats) {
+        stats->slot_index = slot_idx;
+        stats->sf = slot->sf;
+        stats->freq_mhz = slot->freq_mhz;
+        stats->gw_role_str = "RX";
+        stats->expected = PKT_PER_WINDOW;
+        stats->rx_ok = nb_ok;
+        stats->rx_crc_bad = nb_bad;
+        stats->tx_sent = 0;
+    }
+}
+
+/* Ventana en la que el gateway transmite (T3S3 escucha). Arma un paquete
+ * "plantilla" con los parametros fijos del enlace (una sola vez) y despues,
+ * por cada uno de los PKT_PER_WINDOW paquetes: espera que el modem TX este
+ * libre, completa el payload con el indice/timestamp de este paquete
+ * puntual, mide el tiempo en el aire (ToA) y lo manda. */
+static void gateway_transmit_window(int slot_idx, const schedule_slot_t *slot, double slot_start_ms, double slot_end_ms, window_stats_t *stats) {
+    struct lgw_pkt_tx_s pkt;
+    memset(&pkt, 0, sizeof pkt);
+    pkt.freq_hz = (uint32_t)(slot->freq_mhz * 1e6 + 0.5);  /* +0.5 para redondear en vez de truncar */
+    pkt.tx_mode = IMMEDIATE;      /* mandar apenas el modem este libre, sin trigger por timestamp/GPS */
+    pkt.rf_chain = rf_chain_for_freq(pkt.freq_hz);  /* que radio sale segun la frecuencia de hop de este slot */
+
+    log_line("GW-TX-START", "slot=%d radio=%u sf=SF%u freq=%.1fMHz dur=%ums ldro=%s",
+             slot_idx, pkt.rf_chain, (unsigned)slot->sf, slot->freq_mhz, (unsigned)slot->duration_ms, slot->ldro ? "ON" : "OFF");
+
+    pkt.rf_power = GW_TX_POWER_DBM;
+    pkt.modulation = MOD_LORA;
+    pkt.bandwidth = BW_125KHZ;
+    pkt.datarate = slot->sf;
+    pkt.coderate = CR_LORA_4_6;
+    pkt.invert_pol = true; /* TX de gateway con IQ invertido, estilo LoRaWAN (downlink) */
+    pkt.preamble = 16;
+    pkt.no_crc = false;    /* false = CRC incluido (pedido "CRC: ON") */
+    pkt.no_header = false; /* false = header explicito */
+    pkt.size = PAYLOAD_SIZE;
+
+    uint32_t sent = 0;
+    for (uint8_t i = 0; i < PKT_PER_WINDOW && !g_exit_requested; i++) {
+        if (elapsed_ms() >= slot_end_ms) {
+            /* Se acabo la ventana antes de completar los 10 paquetes (por
+               ejemplo si hubo demoras esperando TX_FREE) -- se corta aca en
+               vez de seguir mandando paquetes fuera de la ventana asignada. */
+            log_line("GW-TX-WARN", "slot=%d ventana terminando, enviados=%u de %d", slot_idx, sent, PKT_PER_WINDOW);
+            break;
+        }
+
+        if (!wait_tx_free(pkt.rf_chain, 500.0)) {
+            log_line("GW-TX-WARN", "slot=%d TX no disponible antes de idx=%u", slot_idx, (unsigned)i);
+        }
+
+        /* El timestamp que va DENTRO del payload es relativo al inicio de
+           la ventana (slot_start_ms), coherente con lo que se pide en el
+           formato de payload de mas arriba. */
+        uint32_t rel_ms = (uint32_t)(elapsed_ms() - slot_start_ms);
+        build_tx_payload(pkt.payload, slot->sf, slot->freq_mhz, i, PKT_PER_WINDOW, rel_ms);
+
+        uint32_t toa_ms = lgw_time_on_air(&pkt);  /* calculado por el HAL a partir de SF/BW/CR/tamaño */
+
+        int rc = lgw_send(&pkt);
+        if (rc != LGW_HAL_SUCCESS) {
+            log_line("GW-TX-WARN", "slot=%d lgw_send fallo idx=%u", slot_idx, (unsigned)i);
+            continue;  /* no incrementa "sent"; se intenta igual el siguiente indice */
+        }
+
+        /* Esperamos a que el paquete termine de salir por aire (timeout
+           generoso: ToA estimado + 300ms de margen) antes de tocar el
+           payload del siguiente envio. */
+        if (!wait_tx_free(pkt.rf_chain, toa_ms + 300.0)) {
+            log_line("GW-TX-WARN", "slot=%d timeout esperando fin de TX idx=%u", slot_idx, (unsigned)i);
+        }
+
+        sent++;
+        log_line("GW-TX", "idx=%u sf=SF%u size=%u toa=%ums t=%.0fms",
+                 (unsigned)i, (unsigned)slot->sf, (unsigned)pkt.size, toa_ms, elapsed_ms() - slot_start_ms);
+
+        wait_ms(INTER_PKT_GAP_MS);  /* gap fijo de 40ms entre el fin de un paquete y el arranque del siguiente */
+    }
+
+    log_line("GW-TX-END", "slot=%d enviados=%u de %d", slot_idx, sent, PKT_PER_WINDOW);
+
+    if (stats) {
+        stats->slot_index = slot_idx;
+        stats->sf = slot->sf;
+        stats->freq_mhz = slot->freq_mhz;
+        stats->gw_role_str = "TX";
+        stats->expected = PKT_PER_WINDOW;
+        stats->rx_ok = 0;
+        stats->rx_crc_bad = 0;
+        stats->tx_sent = sent;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* --- ESTADISTICAS ACUMULADAS Y REPORTE --------------------------------------- */
+
+/* Pliega el resultado de UNA ventana (recien terminada) en los totales
+   acumulados desde que arranco el programa. */
+static void accumulate_window_stats(running_stats_t *acc, const window_stats_t *w) {
+    if (strcmp(w->gw_role_str, "RX") == 0) {
+        acc->windows_rx++;
+        acc->rx_ok_total += w->rx_ok;
+        acc->rx_bad_total += w->rx_crc_bad;
+        acc->rx_expected_total += w->expected;
+    } else {
+        acc->windows_tx++;
+        acc->tx_sent_total += w->tx_sent;
+        acc->tx_expected_total += w->expected;
+    }
+}
+
+/* Imprime el resumen acumulado hasta este momento. Se llama tanto al
+   cerrar cada vuelta del ciclo (label="Fin de vuelta", el programa sigue
+   corriendo) como al salir (label="Resumen final", tras Ctrl+C). */
+static void print_report(const running_stats_t *s, double total_real_ms, const char *label) {
+    double per = (s->rx_expected_total > 0)
+                     ? 100.0 * (double)(s->rx_expected_total - s->rx_ok_total) / (double)s->rx_expected_total
+                     : 0.0;
+    if (per < 0.0) {
+        per = 0.0;
+    }
+
+    log_line("REPORT", "===== %s =====", label);
+    log_line("REPORT", "vueltas_completas=%lld ventanas_rx=%llu ventanas_tx=%llu",
+             (long long)s->laps_completed, (unsigned long long)s->windows_rx, (unsigned long long)s->windows_tx);
+    log_line("REPORT", "rx=%llu/%llu (crc_bad=%llu) PER_global=%.1f%%",
+             (unsigned long long)s->rx_ok_total, (unsigned long long)s->rx_expected_total,
+             (unsigned long long)s->rx_bad_total, per);
+    log_line("REPORT", "tx=%llu/%llu enviados",
+             (unsigned long long)s->tx_sent_total, (unsigned long long)s->tx_expected_total);
+    log_line("REPORT", "tiempo_corriendo=%.0fms (~%.2f vueltas de %ums)",
+             total_real_ms, total_real_ms / (double)SCHEDULE_CYCLE_MS, (unsigned)SCHEDULE_CYCLE_MS);
+}
+
+/* -------------------------------------------------------------------------- */
+/* --- MAIN ---------------------------------------------------------------------- */
+
+int main(int argc, char **argv) {
+    /* argv[1] opcional: puerto serie del GPS. Sin argumento usa /dev/serial0. */
+    const char *gps_port = GPS_DEFAULT_PORT;
+    if (argc > 1) {
+        gps_port = argv[1];
+    }
+
+    /* Ctrl+C (SIGINT) o kill (SIGTERM) solo levantan la bandera
+       g_exit_requested -- la limpieza real (lgw_stop, reset, reporte
+       final) la hace el flujo normal de main() al notar la bandera
+       arriba, nunca dentro del propio manejador de señal. */
+    struct sigaction sa;
+    memset(&sa, 0, sizeof sa);
+    sa.sa_handler = sig_handler;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+
+    log_line("SYNC", "test_sync_windows iniciando, puerto_gps=%s", gps_port);
+
+    /* Fase 1: configuracion que no depende de la frecuencia/SF de ningun slot en particular. */
+    if (configure_board_and_txlut() != 0) {
+        return EXIT_FAILURE;
+    }
+
+    /* Fase 2: bloquea aca hasta que llega el instante de union (el inicio
+       de la proxima ventana activa del ciclo, calculado por GPS). A partir
+       de este punto, g_t0_local queda fijo para el resto de la ejecucion
+       y elapsed_ms() empieza a tener sentido. join_lap/join_index dicen en
+       que vuelta e indice de SCHEDULE[] hay que arrancar (no necesariamente
+       vuelta 0 / slot 0: puede ser cualquier ventana activa del schedule,
+       segun en que momento se haya conseguido el fix GPS). */
+    struct timespec t0;
+    int64_t lap;
+    int i_start;
+    if (sync_with_gps(gps_port, &t0, &lap, &i_start) != 0) {
+        log_line("ERROR", "sincronizacion GPS abortada");
+        return EXIT_FAILURE;
+    }
+    g_t0_local = t0;
+
+    /* Fase 3: arranque inicial del concentrador con ambos radios fijos
+       (RADIO0_FREQ_HZ/RADIO1_FREQ_HZ, 8 canales) -- no depende de en que
+       slot nos hayamos unido, porque la config de RX ya no cambia nunca
+       durante la ejecucion (ver configure_dual_radio_rx()). */
+    if (configure_dual_radio_rx() != 0) {
+        return EXIT_FAILURE;
+    }
+    double reset_ms = 0.0;
+    run_reset_script("start", &reset_ms);
+    if (lgw_start() != LGW_HAL_SUCCESS) {
+        log_line("ERROR", "lgw_start inicial fallo");
+        return EXIT_FAILURE;
+    }
+    log_line("SYNC", "concentrador iniciado (reset=%.0fms), comienza vuelta=%lld desde slot=%d", reset_ms, (long long)lap, i_start);
+
+    /* Fase 4: loop de vueltas ("laps") del ciclo, sin fin (hasta Ctrl+C).
+       La primera vuelta puede arrancar a mitad de camino (en i_start, que
+       puede ser distinto de 0 si nos unimos tarde) -- las vueltas
+       siguientes siempre arrancan limpias desde el slot 0. */
+    running_stats_t totals;
+    memset(&totals, 0, sizeof totals);
+
+    for (;;) {
+        for (int i = i_start; i < SCHEDULE_LEN && !g_exit_requested; i++) {
+            const schedule_slot_t *slot = &SCHEDULE[i];
+            double slot_start_ms = (double)lap * SCHEDULE_CYCLE_MS + (double)slot->offset_ms;
+            double slot_end_ms = slot_start_ms + (double)slot->duration_ms;
+
+            /* Como los slots son contiguos dentro de una vuelta, este
+               while normalmente no espera nada -- es una red de seguridad
+               por si el slot anterior termino un poco antes de lo esperado. */
+            while (!g_exit_requested && elapsed_ms() < slot_start_ms) {
+                wait_ms(1);
+            }
+            if (g_exit_requested) {
+                break;
+            }
+
+            if (slot->guard_type == GUARD_ROLE) {
+                /* Guarda: no hay nada que reconfigurar en el hardware (los
+                   dos radios quedan siempre fijos, ver configure_dual_radio_rx()),
+                   solo dejamos pasar el tiempo mientras ambos extremos
+                   invierten sus roles TX/RX (y, si corresponde, cambian de
+                   frecuencia de hop) para el proximo slot. */
+                log_line("SYNC", "guarda cambio de rol slot=%d dur=%ums", i, (unsigned)slot->duration_ms);
+                while (!g_exit_requested && elapsed_ms() < slot_end_ms) {
+                    wait_ms(2);
+                }
+                continue;
+            }
+
+            /* Ventana activa (guard_type == GUARD_NONE): segun el rol de
+               ESTE gateway en este slot, escuchamos o transmitimos, y
+               plegamos el resultado en las estadisticas acumuladas. */
+            window_stats_t w;
+            if (slot->gw_role == ROLE_RX) {
+                gateway_receive_window(i, slot, slot_start_ms, slot_end_ms, &w);
+                accumulate_window_stats(&totals, &w);
+            } else if (slot->gw_role == ROLE_TX) {
+                gateway_transmit_window(i, slot, slot_start_ms, slot_end_ms, &w);
+                accumulate_window_stats(&totals, &w);
+            }
+        }
+
+        if (g_exit_requested) {
+            break;
+        }
+
+        totals.laps_completed++;
+        print_report(&totals, elapsed_ms(), "Fin de vuelta");
+
+        /* Cierre de vuelta: el ultimo slot del ciclo y el primero del
+           proximo no tienen guarda entre medio en la tabla, pero como los
+           radios quedan siempre fijos (configure_dual_radio_rx() no se
+           vuelve a llamar) no hace falta reconfigurar nada aca -- solo
+           avanzar a la vuelta siguiente. */
+        lap++;
+        i_start = 0;
+    }
+
+    /* Limpieza: se ejecuta tanto si se corto con Ctrl+C como si una
+       reconfiguracion fallo, para dejar el hardware en un estado conocido. */
+    lgw_stop();
+    run_reset_script("stop", NULL);
+
+    print_report(&totals, elapsed_ms(), "Resumen final");
+
+    return g_exit_requested ? EXIT_FAILURE : EXIT_SUCCESS;
+}

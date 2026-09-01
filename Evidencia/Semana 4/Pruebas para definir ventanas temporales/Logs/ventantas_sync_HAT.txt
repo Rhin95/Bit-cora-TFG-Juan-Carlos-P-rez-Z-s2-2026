@@ -1,0 +1,418 @@
+[02:30:10.537] [SYNC] test_sync_windows iniciando, puerto_gps=/dev/serial0
+[02:30:10.538] [GPS-FIX] puerto=/dev/serial0 baud=9600 abierto
+[02:30:10.797] [GPS-FIX] status=A utc=02:30:10 fix=valido
+[02:30:10.797] [SYNC] fase=2800ms union=slot2 SF12 902.0MHz vuelta=actual
+[02:30:10.797] [COUNTDOWN] faltan 33s para el punto de union
+[02:30:11.301] [COUNTDOWN] faltan 32s para el punto de union
+[02:30:11.801] [GPS-FIX] status=A utc=02:30:11 fix=valido
+[02:30:12.307] [COUNTDOWN] faltan 31s para el punto de union
+[02:30:12.774] [GPS-FIX] status=A utc=02:30:12 fix=valido
+[02:30:13.276] [COUNTDOWN] faltan 30s para el punto de union
+[02:30:13.792] [GPS-FIX] status=A utc=02:30:13 fix=valido
+[02:30:14.299] [COUNTDOWN] faltan 29s para el punto de union
+[02:30:14.782] [GPS-FIX] status=A utc=02:30:14 fix=valido
+[02:30:15.284] [COUNTDOWN] faltan 28s para el punto de union
+[02:30:15.776] [GPS-FIX] status=A utc=02:30:15 fix=valido
+[02:30:16.279] [COUNTDOWN] faltan 27s para el punto de union
+[02:30:16.796] [GPS-FIX] status=A utc=02:30:16 fix=valido
+[02:30:17.301] [COUNTDOWN] faltan 26s para el punto de union
+[02:30:17.801] [GPS-FIX] status=A utc=02:30:17 fix=valido
+[02:30:18.304] [COUNTDOWN] faltan 25s para el punto de union
+[02:30:18.820] [GPS-FIX] status=A utc=02:30:18 fix=valido
+[02:30:19.321] [COUNTDOWN] faltan 24s para el punto de union
+[02:30:19.813] [GPS-FIX] status=A utc=02:30:19 fix=valido
+[02:30:20.317] [COUNTDOWN] faltan 23s para el punto de union
+[02:30:20.817] [GPS-FIX] status=A utc=02:30:20 fix=valido
+[02:30:21.324] [COUNTDOWN] faltan 22s para el punto de union
+[02:30:21.807] [GPS-FIX] status=A utc=02:30:21 fix=valido
+[02:30:22.315] [COUNTDOWN] faltan 21s para el punto de union
+[02:30:22.799] [GPS-FIX] status=A utc=02:30:22 fix=valido
+[02:30:23.302] [COUNTDOWN] faltan 20s para el punto de union
+[02:30:23.819] [GPS-FIX] status=A utc=02:30:23 fix=valido
+[02:30:24.326] [COUNTDOWN] faltan 19s para el punto de union
+[02:30:24.818] [GPS-FIX] status=A utc=02:30:24 fix=valido
+[02:30:25.323] [COUNTDOWN] faltan 18s para el punto de union
+[02:30:25.807] [GPS-FIX] status=A utc=02:30:25 fix=valido
+[02:30:26.310] [COUNTDOWN] faltan 17s para el punto de union
+[02:30:26.802] [GPS-FIX] status=A utc=02:30:26 fix=valido
+[02:30:27.305] [COUNTDOWN] faltan 16s para el punto de union
+[02:30:27.797] [GPS-FIX] status=A utc=02:30:27 fix=valido
+[02:30:28.300] [COUNTDOWN] faltan 15s para el punto de union
+[02:30:28.817] [GPS-FIX] status=A utc=02:30:28 fix=valido
+[02:30:29.324] [COUNTDOWN] faltan 14s para el punto de union
+[02:30:29.807] [GPS-FIX] status=A utc=02:30:29 fix=valido
+[02:30:30.310] [COUNTDOWN] faltan 13s para el punto de union
+[02:30:30.819] [GPS-FIX] status=A utc=02:30:30 fix=valido
+[02:30:31.325] [COUNTDOWN] faltan 12s para el punto de union
+[02:30:31.817] [GPS-FIX] status=A utc=02:30:31 fix=valido
+[02:30:32.319] [COUNTDOWN] faltan 11s para el punto de union
+[02:30:32.802] [GPS-FIX] status=A utc=02:30:32 fix=valido
+[02:30:33.310] [COUNTDOWN] faltan 10s para el punto de union
+[02:30:33.810] [GPS-FIX] status=A utc=02:30:33 fix=valido
+[02:30:34.316] [COUNTDOWN] faltan 9s para el punto de union
+[02:30:34.791] [GPS-FIX] status=A utc=02:30:34 fix=valido
+[02:30:35.293] [COUNTDOWN] faltan 8s para el punto de union
+[02:30:35.810] [GPS-FIX] status=A utc=02:30:35 fix=valido
+[02:30:36.313] [COUNTDOWN] faltan 7s para el punto de union
+[02:30:36.822] [GPS-FIX] status=A utc=02:30:36 fix=valido
+[02:30:37.328] [COUNTDOWN] faltan 6s para el punto de union
+[02:30:37.811] [GPS-FIX] status=A utc=02:30:37 fix=valido
+[02:30:38.314] [COUNTDOWN] faltan 5s para el punto de union
+[02:30:38.806] [GPS-FIX] status=A utc=02:30:38 fix=valido
+[02:30:39.308] [COUNTDOWN] faltan 4s para el punto de union
+[02:30:39.825] [GPS-FIX] status=A utc=02:30:39 fix=valido
+[02:30:40.328] [COUNTDOWN] faltan 3s para el punto de union
+[02:30:40.811] [GPS-FIX] status=A utc=02:30:40 fix=valido
+[02:30:41.316] [COUNTDOWN] faltan 2s para el punto de union
+[02:30:41.825] [GPS-FIX] status=A utc=02:30:41 fix=valido
+[02:30:42.326] [COUNTDOWN] faltan 1s para el punto de union
+[02:30:42.843] [GPS-FIX] status=A utc=02:30:42 fix=valido
+[02:30:43.345] [COUNTDOWN] faltan 0s para el punto de union
+[02:30:43.812] [GPS-FIX] status=A utc=02:30:43 fix=valido
+[02:30:43.812] [SYNC] union alcanzada: slot2 (SF12 902.0MHz), comienza la ejecucion
+Opening SPI communication interface
+Note: chip version is 0x12 (v1.2)
+INFO: using legacy timestamp
+ARB: dual demodulation disabled for all SF
+INFO: found temperature sensor on port 0x39
+[02:30:46.946] [SYNC] concentrador iniciado (reset=776ms), comienza vuelta=0 desde slot=2
+[02:30:46.946] [GW-TX-START] slot=2 radio=0 sf=SF12 freq=902.0MHz dur=35000ms ldro=ON
+[02:30:49.449] [GW-TX] idx=0 sf=SF12 size=38 toa=2499ms t=5638ms
+[02:30:51.993] [GW-TX] idx=1 sf=SF12 size=38 toa=2499ms t=8181ms
+[02:30:54.536] [GW-TX] idx=2 sf=SF12 size=38 toa=2499ms t=10724ms
+[02:30:57.080] [GW-TX] idx=3 sf=SF12 size=38 toa=2499ms t=13269ms
+[02:30:59.624] [GW-TX] idx=4 sf=SF12 size=38 toa=2499ms t=15812ms
+[02:31:02.167] [GW-TX] idx=5 sf=SF12 size=38 toa=2499ms t=18355ms
+[02:31:04.711] [GW-TX] idx=6 sf=SF12 size=38 toa=2499ms t=20899ms
+[02:31:07.254] [GW-TX] idx=7 sf=SF12 size=38 toa=2499ms t=23443ms
+[02:31:09.798] [GW-TX] idx=8 sf=SF12 size=38 toa=2499ms t=25986ms
+[02:31:12.343] [GW-TX] idx=9 sf=SF12 size=38 toa=2499ms t=28531ms
+[02:31:12.383] [GW-TX-END] slot=2 enviados=10 de 10
+[02:31:18.813] [SYNC] guarda cambio de rol slot=3 dur=2000ms
+[02:31:20.812] [GW-RX-START] slot=4 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF10 902.6MHz dur=10000ms ldro=OFF
+[02:31:30.813] [GW-RX-END] slot=4 recibidos=0 crc_bad=0 esperados=10 PER=100.0%
+[02:31:30.813] [SYNC] guarda cambio de rol slot=5 dur=800ms
+[02:31:31.613] [GW-TX-START] slot=6 radio=0 sf=SF10 freq=902.6MHz dur=10000ms ldro=OFF
+[02:31:32.242] [GW-TX] idx=0 sf=SF10 size=38 toa=625ms t=630ms
+[02:31:32.912] [GW-TX] idx=1 sf=SF10 size=38 toa=625ms t=1300ms
+[02:31:33.582] [GW-TX] idx=2 sf=SF10 size=38 toa=625ms t=1970ms
+[02:31:34.251] [GW-TX] idx=3 sf=SF10 size=38 toa=625ms t=2640ms
+[02:31:34.921] [GW-TX] idx=4 sf=SF10 size=38 toa=625ms t=3309ms
+[02:31:35.591] [GW-TX] idx=5 sf=SF10 size=38 toa=625ms t=3979ms
+[02:31:36.261] [GW-TX] idx=6 sf=SF10 size=38 toa=625ms t=4649ms
+[02:31:36.931] [GW-TX] idx=7 sf=SF10 size=38 toa=625ms t=5320ms
+[02:31:37.601] [GW-TX] idx=8 sf=SF10 size=38 toa=625ms t=5989ms
+[02:31:38.271] [GW-TX] idx=9 sf=SF10 size=38 toa=625ms t=6660ms
+[02:31:38.312] [GW-TX-END] slot=6 enviados=10 de 10
+[02:31:41.612] [SYNC] guarda cambio de rol slot=7 dur=2000ms
+[02:31:43.614] [GW-RX-START] slot=8 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF8 903.2MHz dur=4000ms ldro=OFF
+[02:31:43.616] [GW-RX] idx=0 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=4ms
+[02:31:43.616] [GW-RX] idx=1 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.5 size=38 t=4ms
+[02:31:43.616] [GW-RX] idx=2 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.5 size=38 t=4ms
+[02:31:43.771] [GW-RX] idx=3 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.8 size=38 t=159ms
+[02:31:43.984] [GW-RX] idx=4 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.8 size=38 t=372ms
+[02:31:44.194] [GW-RX] idx=5 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.8 size=38 t=582ms
+[02:31:44.405] [GW-RX] idx=6 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=793ms
+[02:31:44.615] [GW-RX] idx=7 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=1003ms
+[02:31:44.828] [GW-RX] idx=8 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=1216ms
+[02:31:45.038] [GW-RX] idx=9 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.8 size=38 t=1426ms
+[02:31:47.613] [GW-RX-END] slot=8 recibidos=10 crc_bad=0 esperados=10 PER=0.0%
+[02:31:47.613] [SYNC] guarda cambio de rol slot=9 dur=800ms
+[02:31:48.413] [GW-TX-START] slot=10 radio=1 sf=SF8 freq=903.2MHz dur=4000ms ldro=OFF
+[02:31:48.599] [GW-TX] idx=0 sf=SF8 size=38 toa=181ms t=187ms
+[02:31:48.824] [GW-TX] idx=1 sf=SF8 size=38 toa=181ms t=412ms
+[02:31:49.050] [GW-TX] idx=2 sf=SF8 size=38 toa=181ms t=638ms
+[02:31:49.275] [GW-TX] idx=3 sf=SF8 size=38 toa=181ms t=863ms
+[02:31:49.501] [GW-TX] idx=4 sf=SF8 size=38 toa=181ms t=1089ms
+[02:31:49.726] [GW-TX] idx=5 sf=SF8 size=38 toa=181ms t=1314ms
+[02:31:49.952] [GW-TX] idx=6 sf=SF8 size=38 toa=181ms t=1540ms
+[02:31:50.177] [GW-TX] idx=7 sf=SF8 size=38 toa=181ms t=1766ms
+[02:31:50.403] [GW-TX] idx=8 sf=SF8 size=38 toa=181ms t=1991ms
+[02:31:50.628] [GW-TX] idx=9 sf=SF8 size=38 toa=181ms t=2216ms
+[02:31:50.668] [GW-TX-END] slot=10 enviados=10 de 10
+[02:31:50.668] [REPORT] ===== Fin de vuelta =====
+[02:31:50.668] [REPORT] vueltas_completas=1 ventanas_rx=2 ventanas_tx=3
+[02:31:50.668] [REPORT] rx=10/20 (crc_bad=0) PER_global=50.0%
+[02:31:50.668] [REPORT] tx=30/30 enviados
+[02:31:50.668] [REPORT] tiempo_corriendo=102657ms (~0.98 vueltas de 104400ms)
+[02:31:52.412] [GW-RX-START] slot=0 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF12 902.0MHz dur=35000ms ldro=ON
+[02:31:54.428] [GW-RX] idx=0 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=11.2 size=38 t=2016ms
+[02:31:56.712] [GW-RX] idx=1 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.8 size=38 t=4300ms
+[02:31:58.996] [GW-RX] idx=2 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.8 size=38 t=6584ms
+[02:32:01.279] [GW-RX] idx=3 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=14.2 size=38 t=8867ms
+[02:32:03.562] [GW-RX] idx=4 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=11.8 size=38 t=11150ms
+[02:32:05.847] [GW-RX] idx=5 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=13435ms
+[02:32:08.131] [GW-RX] idx=6 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.5 size=38 t=15719ms
+[02:32:10.414] [GW-RX] idx=7 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=18002ms
+[02:32:12.699] [GW-RX] idx=8 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.8 size=38 t=20287ms
+[02:32:14.982] [GW-RX] idx=9 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.8 size=38 t=22570ms
+[02:32:27.413] [GW-RX-END] slot=0 recibidos=10 crc_bad=0 esperados=10 PER=0.0%
+[02:32:27.413] [SYNC] guarda cambio de rol slot=1 dur=800ms
+[02:32:28.213] [GW-TX-START] slot=2 radio=0 sf=SF12 freq=902.0MHz dur=35000ms ldro=ON
+[02:32:30.715] [GW-TX] idx=0 sf=SF12 size=38 toa=2499ms t=2504ms
+[02:32:33.260] [GW-TX] idx=1 sf=SF12 size=38 toa=2499ms t=5048ms
+[02:32:35.803] [GW-TX] idx=2 sf=SF12 size=38 toa=2499ms t=7592ms
+[02:32:38.347] [GW-TX] idx=3 sf=SF12 size=38 toa=2499ms t=10136ms
+[02:32:40.890] [GW-TX] idx=4 sf=SF12 size=38 toa=2499ms t=12678ms
+[02:32:43.433] [GW-TX] idx=5 sf=SF12 size=38 toa=2499ms t=15221ms
+[02:32:45.978] [GW-TX] idx=6 sf=SF12 size=38 toa=2499ms t=17766ms
+[02:32:48.520] [GW-TX] idx=7 sf=SF12 size=38 toa=2499ms t=20309ms
+[02:32:51.064] [GW-TX] idx=8 sf=SF12 size=38 toa=2499ms t=22853ms
+[02:32:53.607] [GW-TX] idx=9 sf=SF12 size=38 toa=2499ms t=25396ms
+[02:32:53.648] [GW-TX-END] slot=2 enviados=10 de 10
+[02:33:03.213] [SYNC] guarda cambio de rol slot=3 dur=2000ms
+[02:33:05.213] [GW-RX-START] slot=4 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF10 902.6MHz dur=10000ms ldro=OFF
+[02:33:05.214] [GW-RX] idx=0 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.8 size=38 t=3ms
+[02:33:05.339] [GW-RX] idx=1 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=14.2 size=38 t=128ms
+[02:33:05.946] [GW-RX] idx=2 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=14.0 size=38 t=734ms
+[02:33:06.553] [GW-RX] idx=3 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.8 size=38 t=1341ms
+[02:33:07.159] [GW-RX] idx=4 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=14.0 size=38 t=1947ms
+[02:33:07.159] [GW-RX] CRC_BAD radio=0 ch=1 freq=902.2MHz sf=SF10 rssi=-112.4 size=38 t=1947ms
+[02:33:07.765] [GW-RX] idx=5 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.5 size=38 t=2553ms
+[02:33:08.371] [GW-RX] idx=6 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.8 size=38 t=3159ms
+[02:33:08.977] [GW-RX] idx=7 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=14.2 size=38 t=3765ms
+[02:33:09.581] [GW-RX] idx=8 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.8 size=38 t=4370ms
+[02:33:10.187] [GW-RX] idx=9 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=14.0 size=38 t=4975ms
+[02:33:15.213] [GW-RX-END] slot=4 recibidos=10 crc_bad=1 esperados=10 PER=0.0%
+[02:33:15.213] [SYNC] guarda cambio de rol slot=5 dur=800ms
+[02:33:16.013] [GW-TX-START] slot=6 radio=0 sf=SF10 freq=902.6MHz dur=10000ms ldro=OFF
+[02:33:16.643] [GW-TX] idx=0 sf=SF10 size=38 toa=625ms t=632ms
+[02:33:17.313] [GW-TX] idx=1 sf=SF10 size=38 toa=625ms t=1301ms
+[02:33:17.983] [GW-TX] idx=2 sf=SF10 size=38 toa=625ms t=1971ms
+[02:33:18.653] [GW-TX] idx=3 sf=SF10 size=38 toa=625ms t=2641ms
+[02:33:19.322] [GW-TX] idx=4 sf=SF10 size=38 toa=625ms t=3310ms
+[02:33:19.992] [GW-TX] idx=5 sf=SF10 size=38 toa=625ms t=3980ms
+[02:33:20.663] [GW-TX] idx=6 sf=SF10 size=38 toa=625ms t=4651ms
+[02:33:21.332] [GW-TX] idx=7 sf=SF10 size=38 toa=625ms t=5321ms
+[02:33:22.002] [GW-TX] idx=8 sf=SF10 size=38 toa=625ms t=5991ms
+[02:33:22.672] [GW-TX] idx=9 sf=SF10 size=38 toa=625ms t=6660ms
+[02:33:22.712] [GW-TX-END] slot=6 enviados=10 de 10
+[02:33:26.013] [SYNC] guarda cambio de rol slot=7 dur=2000ms
+[02:33:28.014] [GW-RX-START] slot=8 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF8 903.2MHz dur=4000ms ldro=OFF
+[02:33:28.016] [GW-RX] idx=0 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.2 size=38 t=4ms
+[02:33:28.016] [GW-RX] idx=1 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.5 size=38 t=4ms
+[02:33:28.016] [GW-RX] idx=2 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.5 size=38 t=4ms
+[02:33:28.016] [GW-RX] idx=3 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.5 size=38 t=4ms
+[02:33:28.016] [GW-RX] idx=4 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.0 size=38 t=4ms
+[02:33:28.192] [GW-RX] idx=5 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.2 size=38 t=180ms
+[02:33:28.402] [GW-RX] idx=6 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.2 size=38 t=390ms
+[02:33:28.615] [GW-RX] idx=7 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.2 size=38 t=603ms
+[02:33:28.825] [GW-RX] idx=8 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.0 size=38 t=813ms
+[02:33:29.036] [GW-RX] idx=9 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=16.5 size=38 t=1024ms
+[02:33:32.014] [GW-RX-END] slot=8 recibidos=10 crc_bad=0 esperados=10 PER=0.0%
+[02:33:32.014] [SYNC] guarda cambio de rol slot=9 dur=800ms
+[02:33:32.813] [GW-TX-START] slot=10 radio=1 sf=SF8 freq=903.2MHz dur=4000ms ldro=OFF
+[02:33:32.999] [GW-TX] idx=0 sf=SF8 size=38 toa=181ms t=187ms
+[02:33:33.224] [GW-TX] idx=1 sf=SF8 size=38 toa=181ms t=412ms
+[02:33:33.450] [GW-TX] idx=2 sf=SF8 size=38 toa=181ms t=638ms
+[02:33:33.675] [GW-TX] idx=3 sf=SF8 size=38 toa=181ms t=863ms
+[02:33:33.901] [GW-TX] idx=4 sf=SF8 size=38 toa=181ms t=1089ms
+[02:33:34.126] [GW-TX] idx=5 sf=SF8 size=38 toa=181ms t=1314ms
+[02:33:34.353] [GW-TX] idx=6 sf=SF8 size=38 toa=181ms t=1541ms
+[02:33:34.578] [GW-TX] idx=7 sf=SF8 size=38 toa=181ms t=1767ms
+[02:33:34.804] [GW-TX] idx=8 sf=SF8 size=38 toa=181ms t=1992ms
+[02:33:35.029] [GW-TX] idx=9 sf=SF8 size=38 toa=181ms t=2218ms
+[02:33:35.070] [GW-TX-END] slot=10 enviados=10 de 10
+[02:33:35.070] [REPORT] ===== Fin de vuelta =====
+[02:33:35.070] [REPORT] vueltas_completas=2 ventanas_rx=5 ventanas_tx=6
+[02:33:35.070] [REPORT] rx=40/50 (crc_bad=1) PER_global=20.0%
+[02:33:35.070] [REPORT] tx=60/60 enviados
+[02:33:35.070] [REPORT] tiempo_corriendo=207058ms (~1.98 vueltas de 104400ms)
+[02:33:36.813] [GW-RX-START] slot=0 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF12 902.0MHz dur=35000ms ldro=ON
+[02:33:38.435] [GW-RX] idx=0 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=11.5 size=38 t=1623ms
+[02:33:38.435] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=1623ms
+[02:33:40.719] [GW-RX] idx=1 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=3907ms
+[02:33:43.002] [GW-RX] idx=2 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=6190ms
+[02:33:45.285] [GW-RX] idx=3 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.2 size=38 t=8474ms
+[02:33:47.570] [GW-RX] idx=4 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=14.2 size=38 t=10758ms
+[02:33:49.854] [GW-RX] idx=5 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.5 size=38 t=13042ms
+[02:33:52.137] [GW-RX] idx=6 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.2 size=38 t=15326ms
+[02:33:52.137] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=15326ms
+[02:33:54.422] [GW-RX] idx=7 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=11.8 size=38 t=17610ms
+[02:33:56.705] [GW-RX] idx=8 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=19893ms
+[02:33:58.990] [GW-RX] idx=9 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.0 size=38 t=22178ms
+[02:34:11.813] [GW-RX-END] slot=0 recibidos=10 crc_bad=2 esperados=10 PER=0.0%
+[02:34:11.813] [SYNC] guarda cambio de rol slot=1 dur=800ms
+[02:34:12.613] [GW-TX-START] slot=2 radio=0 sf=SF12 freq=902.0MHz dur=35000ms ldro=ON
+[02:34:15.117] [GW-TX] idx=0 sf=SF12 size=38 toa=2499ms t=2505ms
+[02:34:17.661] [GW-TX] idx=1 sf=SF12 size=38 toa=2499ms t=5049ms
+[02:34:20.204] [GW-TX] idx=2 sf=SF12 size=38 toa=2499ms t=7592ms
+[02:34:22.748] [GW-TX] idx=3 sf=SF12 size=38 toa=2499ms t=10136ms
+[02:34:25.291] [GW-TX] idx=4 sf=SF12 size=38 toa=2499ms t=12680ms
+[02:34:27.834] [GW-TX] idx=5 sf=SF12 size=38 toa=2499ms t=15222ms
+[02:34:30.378] [GW-TX] idx=6 sf=SF12 size=38 toa=2499ms t=17766ms
+[02:34:32.922] [GW-TX] idx=7 sf=SF12 size=38 toa=2499ms t=20310ms
+[02:34:35.465] [GW-TX] idx=8 sf=SF12 size=38 toa=2499ms t=22853ms
+[02:34:38.009] [GW-TX] idx=9 sf=SF12 size=38 toa=2499ms t=25397ms
+[02:34:38.049] [GW-TX-END] slot=2 enviados=10 de 10
+[02:34:47.612] [SYNC] guarda cambio de rol slot=3 dur=2000ms
+[02:34:49.614] [GW-RX-START] slot=4 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF10 902.6MHz dur=10000ms ldro=OFF
+[02:34:49.615] [GW-RX] idx=0 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.2 size=38 t=4ms
+[02:34:49.738] [GW-RX] idx=1 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.5 size=38 t=126ms
+[02:34:50.343] [GW-RX] idx=2 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=731ms
+[02:34:50.950] [GW-RX] idx=3 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=14.2 size=38 t=1338ms
+[02:34:51.556] [GW-RX] idx=4 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=1945ms
+[02:34:52.161] [GW-RX] idx=5 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=2549ms
+[02:34:52.768] [GW-RX] idx=6 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=3156ms
+[02:34:53.375] [GW-RX] idx=7 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.5 size=38 t=3763ms
+[02:34:53.980] [GW-RX] idx=8 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=4368ms
+[02:34:54.586] [GW-RX] idx=9 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.5 size=38 t=4975ms
+[02:34:59.614] [GW-RX-END] slot=4 recibidos=10 crc_bad=0 esperados=10 PER=0.0%
+[02:34:59.614] [SYNC] guarda cambio de rol slot=5 dur=800ms
+[02:35:00.414] [GW-TX-START] slot=6 radio=0 sf=SF10 freq=902.6MHz dur=10000ms ldro=OFF
+[02:35:01.043] [GW-TX] idx=0 sf=SF10 size=38 toa=625ms t=632ms
+[02:35:01.713] [GW-TX] idx=1 sf=SF10 size=38 toa=625ms t=1302ms
+[02:35:02.383] [GW-TX] idx=2 sf=SF10 size=38 toa=625ms t=1971ms
+[02:35:03.053] [GW-TX] idx=3 sf=SF10 size=38 toa=625ms t=2641ms
+[02:35:03.722] [GW-TX] idx=4 sf=SF10 size=38 toa=625ms t=3310ms
+[02:35:04.392] [GW-TX] idx=5 sf=SF10 size=38 toa=625ms t=3980ms
+[02:35:05.062] [GW-TX] idx=6 sf=SF10 size=38 toa=625ms t=4651ms
+[02:35:05.732] [GW-TX] idx=7 sf=SF10 size=38 toa=625ms t=5320ms
+[02:35:06.402] [GW-TX] idx=8 sf=SF10 size=38 toa=625ms t=5990ms
+[02:35:07.072] [GW-TX] idx=9 sf=SF10 size=38 toa=625ms t=6660ms
+[02:35:07.112] [GW-TX-END] slot=6 enviados=10 de 10
+[02:35:10.412] [SYNC] guarda cambio de rol slot=7 dur=2000ms
+[02:35:12.412] [GW-RX-START] slot=8 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF8 903.2MHz dur=4000ms ldro=OFF
+[02:35:12.415] [GW-RX] idx=0 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=14.5 size=38 t=3ms
+[02:35:12.415] [GW-RX] idx=1 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=14.8 size=38 t=3ms
+[02:35:12.415] [GW-RX] idx=2 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=14.5 size=38 t=3ms
+[02:35:12.415] [GW-RX] idx=3 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=14.8 size=38 t=3ms
+[02:35:12.415] [GW-RX] idx=4 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=14.8 size=38 t=3ms
+[02:35:12.588] [GW-RX] idx=5 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=177ms
+[02:35:12.801] [GW-RX] idx=6 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=389ms
+[02:35:13.012] [GW-RX] idx=7 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=600ms
+[02:35:13.222] [GW-RX] idx=8 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=14.8 size=38 t=811ms
+[02:35:13.433] [GW-RX] idx=9 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-49.4 snr=15.0 size=38 t=1021ms
+[02:35:16.412] [GW-RX-END] slot=8 recibidos=10 crc_bad=0 esperados=10 PER=0.0%
+[02:35:16.413] [SYNC] guarda cambio de rol slot=9 dur=800ms
+[02:35:17.212] [GW-TX-START] slot=10 radio=1 sf=SF8 freq=903.2MHz dur=4000ms ldro=OFF
+[02:35:17.398] [GW-TX] idx=0 sf=SF8 size=38 toa=181ms t=186ms
+[02:35:17.623] [GW-TX] idx=1 sf=SF8 size=38 toa=181ms t=411ms
+[02:35:17.849] [GW-TX] idx=2 sf=SF8 size=38 toa=181ms t=637ms
+[02:35:18.074] [GW-TX] idx=3 sf=SF8 size=38 toa=181ms t=862ms
+[02:35:18.300] [GW-TX] idx=4 sf=SF8 size=38 toa=181ms t=1088ms
+[02:35:18.525] [GW-TX] idx=5 sf=SF8 size=38 toa=181ms t=1313ms
+[02:35:18.752] [GW-TX] idx=6 sf=SF8 size=38 toa=181ms t=1540ms
+[02:35:18.978] [GW-TX] idx=7 sf=SF8 size=38 toa=181ms t=1766ms
+[02:35:19.203] [GW-TX] idx=8 sf=SF8 size=38 toa=181ms t=1991ms
+[02:35:19.429] [GW-TX] idx=9 sf=SF8 size=38 toa=181ms t=2217ms
+[02:35:19.469] [GW-TX-END] slot=10 enviados=10 de 10
+[02:35:19.469] [REPORT] ===== Fin de vuelta =====
+[02:35:19.469] [REPORT] vueltas_completas=3 ventanas_rx=8 ventanas_tx=9
+[02:35:19.469] [REPORT] rx=70/80 (crc_bad=3) PER_global=12.5%
+[02:35:19.469] [REPORT] tx=90/90 enviados
+[02:35:19.469] [REPORT] tiempo_corriendo=311457ms (~2.98 vueltas de 104400ms)
+[02:35:21.212] [GW-RX-START] slot=0 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF12 902.0MHz dur=35000ms ldro=ON
+[02:35:22.820] [GW-RX] idx=0 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=10.2 size=38 t=1608ms
+[02:35:25.105] [GW-RX] idx=1 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.8 size=38 t=3893ms
+[02:35:25.105] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-112.4 size=38 t=3893ms
+[02:35:27.387] [GW-RX] idx=2 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.0 size=38 t=6176ms
+[02:35:29.672] [GW-RX] idx=3 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.2 size=38 t=8460ms
+[02:35:31.955] [GW-RX] idx=4 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.5 size=38 t=10743ms
+[02:35:31.955] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=10743ms
+[02:35:34.239] [GW-RX] idx=5 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.5 size=38 t=13027ms
+[02:35:34.239] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=13027ms
+[02:35:36.522] [GW-RX] idx=6 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=11.2 size=38 t=15311ms
+[02:35:38.807] [GW-RX] idx=7 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.5 size=38 t=17595ms
+[02:35:41.092] [GW-RX] idx=8 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.0 size=38 t=19880ms
+[02:35:41.092] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=19880ms
+[02:35:43.374] [GW-RX] idx=9 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=11.8 size=38 t=22163ms
+[02:35:56.213] [GW-RX-END] slot=0 recibidos=10 crc_bad=4 esperados=10 PER=0.0%
+[02:35:56.213] [SYNC] guarda cambio de rol slot=1 dur=800ms
+[02:35:57.013] [GW-TX-START] slot=2 radio=0 sf=SF12 freq=902.0MHz dur=35000ms ldro=ON
+[02:35:59.517] [GW-TX] idx=0 sf=SF12 size=38 toa=2499ms t=2505ms
+[02:36:02.060] [GW-TX] idx=1 sf=SF12 size=38 toa=2499ms t=5048ms
+[02:36:04.603] [GW-TX] idx=2 sf=SF12 size=38 toa=2499ms t=7592ms
+[02:36:07.147] [GW-TX] idx=3 sf=SF12 size=38 toa=2499ms t=10135ms
+[02:36:09.691] [GW-TX] idx=4 sf=SF12 size=38 toa=2499ms t=12680ms
+[02:36:12.235] [GW-TX] idx=5 sf=SF12 size=38 toa=2499ms t=15223ms
+[02:36:14.778] [GW-TX] idx=6 sf=SF12 size=38 toa=2499ms t=17766ms
+[02:36:17.321] [GW-TX] idx=7 sf=SF12 size=38 toa=2499ms t=20310ms
+[02:36:19.866] [GW-TX] idx=8 sf=SF12 size=38 toa=2499ms t=22854ms
+[02:36:22.409] [GW-TX] idx=9 sf=SF12 size=38 toa=2499ms t=25397ms
+[02:36:22.449] [GW-TX-END] slot=2 enviados=10 de 10
+[02:36:32.012] [SYNC] guarda cambio de rol slot=3 dur=2000ms
+[02:36:34.012] [GW-RX-START] slot=4 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF10 902.6MHz dur=10000ms ldro=OFF
+[02:36:34.014] [GW-RX] idx=0 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=12.8 size=38 t=2ms
+[02:36:34.536] [GW-RX] idx=1 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=524ms
+[02:36:35.140] [GW-RX] idx=2 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.0 size=38 t=1128ms
+[02:36:35.748] [GW-RX] CRC_BAD radio=0 ch=1 freq=902.2MHz sf=SF10 rssi=-112.4 size=38 t=1736ms
+[02:36:35.748] [GW-RX] idx=3 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.8 size=38 t=1736ms
+[02:36:36.352] [GW-RX] CRC_BAD radio=0 ch=1 freq=902.2MHz sf=SF10 rssi=-112.4 size=38 t=2340ms
+[02:36:36.352] [GW-RX] idx=4 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=14.0 size=38 t=2340ms
+[02:36:36.959] [GW-RX] idx=5 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.5 size=38 t=2947ms
+[02:36:36.959] [GW-RX] CRC_BAD radio=0 ch=1 freq=902.2MHz sf=SF10 rssi=-112.4 size=38 t=2947ms
+[02:36:37.565] [GW-RX] idx=6 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=13.2 size=38 t=3553ms
+[02:36:38.170] [GW-RX] idx=7 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.8 size=38 t=4159ms
+[02:36:38.776] [GW-RX] idx=8 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-51.4 snr=14.0 size=38 t=4764ms
+[02:36:39.383] [GW-RX] idx=9 radio=0 ch=3 freq=902.6MHz sf=SF10 rssi=-50.4 snr=13.5 size=38 t=5371ms
+[02:36:44.013] [GW-RX-END] slot=4 recibidos=10 crc_bad=3 esperados=10 PER=0.0%
+[02:36:44.013] [SYNC] guarda cambio de rol slot=5 dur=800ms
+[02:36:44.814] [GW-TX-START] slot=6 radio=0 sf=SF10 freq=902.6MHz dur=10000ms ldro=OFF
+[02:36:45.444] [GW-TX] idx=0 sf=SF10 size=38 toa=625ms t=632ms
+[02:36:46.114] [GW-TX] idx=1 sf=SF10 size=38 toa=625ms t=1302ms
+[02:36:46.783] [GW-TX] idx=2 sf=SF10 size=38 toa=625ms t=1972ms
+[02:36:47.453] [GW-TX] idx=3 sf=SF10 size=38 toa=625ms t=2641ms
+[02:36:48.122] [GW-TX] idx=4 sf=SF10 size=38 toa=625ms t=3310ms
+[02:36:48.792] [GW-TX] idx=5 sf=SF10 size=38 toa=625ms t=3980ms
+[02:36:49.462] [GW-TX] idx=6 sf=SF10 size=38 toa=625ms t=4651ms
+[02:36:50.132] [GW-TX] idx=7 sf=SF10 size=38 toa=625ms t=5321ms
+[02:36:50.802] [GW-TX] idx=8 sf=SF10 size=38 toa=625ms t=5991ms
+[02:36:51.472] [GW-TX] idx=9 sf=SF10 size=38 toa=625ms t=6660ms
+[02:36:51.512] [GW-TX-END] slot=6 enviados=10 de 10
+[02:36:54.813] [SYNC] guarda cambio de rol slot=7 dur=2000ms
+[02:36:56.814] [GW-RX-START] slot=8 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF8 903.2MHz dur=4000ms ldro=OFF
+[02:36:56.816] [GW-RX] idx=0 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=4ms
+[02:36:56.816] [GW-RX] idx=1 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=4ms
+[02:36:56.816] [GW-RX] idx=2 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=4ms
+[02:36:56.964] [GW-RX] idx=3 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=152ms
+[02:36:57.177] [GW-RX] idx=4 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=365ms
+[02:36:57.386] [GW-RX] idx=5 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=14.8 size=38 t=574ms
+[02:36:57.599] [GW-RX] idx=6 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.2 size=38 t=787ms
+[02:36:57.809] [GW-RX] idx=7 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=997ms
+[02:36:58.020] [GW-RX] idx=8 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=1208ms
+[02:36:58.232] [GW-RX] idx=9 radio=1 ch=6 freq=903.2MHz sf=SF8 rssi=-48.4 snr=15.0 size=38 t=1420ms
+[02:37:00.814] [GW-RX-END] slot=8 recibidos=10 crc_bad=0 esperados=10 PER=0.0%
+[02:37:00.814] [SYNC] guarda cambio de rol slot=9 dur=800ms
+[02:37:01.614] [GW-TX-START] slot=10 radio=1 sf=SF8 freq=903.2MHz dur=4000ms ldro=OFF
+[02:37:01.799] [GW-TX] idx=0 sf=SF8 size=38 toa=181ms t=187ms
+[02:37:02.024] [GW-TX] idx=1 sf=SF8 size=38 toa=181ms t=413ms
+[02:37:02.250] [GW-TX] idx=2 sf=SF8 size=38 toa=181ms t=638ms
+[02:37:02.475] [GW-TX] idx=3 sf=SF8 size=38 toa=181ms t=864ms
+[02:37:02.701] [GW-TX] idx=4 sf=SF8 size=38 toa=181ms t=1089ms
+[02:37:02.926] [GW-TX] idx=5 sf=SF8 size=38 toa=181ms t=1314ms
+[02:37:03.153] [GW-TX] idx=6 sf=SF8 size=38 toa=181ms t=1541ms
+[02:37:03.378] [GW-TX] idx=7 sf=SF8 size=38 toa=181ms t=1767ms
+[02:37:03.604] [GW-TX] idx=8 sf=SF8 size=38 toa=181ms t=1992ms
+[02:37:03.830] [GW-TX] idx=9 sf=SF8 size=38 toa=181ms t=2218ms
+[02:37:03.870] [GW-TX-END] slot=10 enviados=10 de 10
+[02:37:03.870] [REPORT] ===== Fin de vuelta =====
+[02:37:03.870] [REPORT] vueltas_completas=4 ventanas_rx=11 ventanas_tx=12
+[02:37:03.870] [REPORT] rx=100/110 (crc_bad=10) PER_global=9.1%
+[02:37:03.870] [REPORT] tx=120/120 enviados
+[02:37:03.870] [REPORT] tiempo_corriendo=415858ms (~3.98 vueltas de 104400ms)
+[02:37:05.612] [GW-RX-START] slot=0 escuchando 8 canales (radio0 902.0-902.6MHz, radio1 902.8-903.4MHz) esperado=SF12 902.0MHz dur=35000ms ldro=ON
+[02:37:07.440] [GW-RX] idx=0 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=1828ms
+[02:37:09.723] [GW-RX] idx=1 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=10.2 size=38 t=4111ms
+[02:37:12.008] [GW-RX] idx=2 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.5 size=38 t=6396ms
+[02:37:14.292] [GW-RX] idx=3 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.2 size=38 t=8680ms
+[02:37:16.576] [GW-RX] idx=4 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=10.0 size=38 t=10964ms
+[02:37:18.860] [GW-RX] idx=5 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=10.8 size=38 t=13248ms
+[02:37:18.860] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=13248ms
+[02:37:21.142] [GW-RX] idx=6 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.2 size=38 t=15531ms
+[02:37:23.427] [GW-RX] idx=7 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.2 size=38 t=17816ms
+[02:37:23.428] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-112.4 size=38 t=17816ms
+[02:37:25.710] [GW-RX] idx=8 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=13.5 size=38 t=20098ms
+[02:37:27.995] [GW-RX] idx=9 radio=0 ch=0 freq=902.0MHz sf=SF12 rssi=-51.4 snr=12.0 size=38 t=22383ms
+[02:37:27.995] [GW-RX] CRC_BAD radio=0 ch=2 freq=902.4MHz sf=SF12 rssi=-113.4 size=38 t=22383ms
+[02:37:40.613] [GW-RX-END] slot=0 recibidos=10 crc_bad=3 esperados=10 PER=0.0%
+[02:37:40.613] [SYNC] guarda cambio de rol slot=1 dur=800ms
+[02:37:41.413] [GW-TX-START] slot=2 radio=0 sf=SF12 freq=902.0MHz dur=35000ms ldro=ON
+[02:37:43.916] [GW-TX] idx=0 sf=SF12 size=38 toa=2499ms t=2504ms
+[02:37:46.460] [GW-TX] idx=1 sf=SF12 size=38 toa=2499ms t=5048ms
+[02:37:49.004] [GW-TX] idx=2 sf=SF12 size=38 toa=2499ms t=7592ms
+[02:37:51.548] [GW-TX] idx=3 sf=SF12 size=38 toa=2499ms t=10136ms
+[02:37:54.092] [GW-TX] idx=4 sf=SF12 size=38 toa=2499ms t=12680ms
+[02:37:56.635] [GW-TX] idx=5 sf=SF12 size=38 toa=2499ms t=15223ms
+[02:37:59.178] [GW-TX] idx=6 sf=SF12 size=38 toa=2499ms t=17767ms
+[02:38:01.722] [GW-TX] idx=7 sf=SF12 size=38 toa=2499ms t=20310ms
