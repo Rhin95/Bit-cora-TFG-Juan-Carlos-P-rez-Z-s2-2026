@@ -10,16 +10,33 @@ El proyecto se titula  "Diseño de un módulo de comunicación para balizas de p
 
 La bitácora se va a registrar avance por secciones semanales en las cuales se especifica fecha, semana y avances por sesión
 
+
+## Semana 6  (del 6 al 12 de septiembre)
+
+
+
+| Actividad                                                                             | Descripción                                                                                                                                     | Información adicional | Fecha exacta |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------ |
+| Estructura del firmware  del t3s3                                                     | La idea es definir la arquitectura del código a implementar                                                                                     |                       | Pendiente    |
+| Estructura del firmware del gateway                                                   | La idea es definir la arquitectura del código a implementar                                                                                     |                       | Pendiente    |
+| Obtención de datos experimentales de velocidad de transiciones del gateway y el T3S3. | Se busca obtener los datos experimentales de los delays que existen en las plataformas a la hora de procesas paquetes, hacer transiciones, etc. |                       | Pendiente    |
+
+
+
+
 ## Semana 5  (del 30 de agosto al 5 de septiembre)
 
 | Actividad                                                                               | Descripción                                                                                                                                                         | Información adicional | Fecha exacta |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------ |
 | Definición del uplink y su formato                                                      | Se define el uplink completo incluyendo el tamaño de los paquetes, confirmación de comandos.                                                                        |                       | Pendiente    |
-| Establecimiento de tiempos para ventanas de comunicación del protocolo de forma teórica | Se establece de forma teórica los tiempos de downlink y uplink, se estima tasas de transferencia y estimaciones de probabilidad de corrupción de error de paquetes. |                       | Pendiente    |
-| Obtención de datos experimentales de velocidad de transiciones del gateway y el T3S3.   | Se busca obtener los datos experimentales de los delays que existen en las plataformas a la hora de procesas paquetes, hacer transiciones, etc.                     |                       | Pendiente    |
-| Estructura del firmware  del t3s3                                                       | La idea es definir la arquitectura del código a implementar                                                                                                         |                       | Pendiente    |
-| Estructura del firmware del gateway                                                     | La idea es definir la arquitectura del código a implementar                                                                                                         |                       | Pendiente    |
+| Diseño de la gestión de memoria desde el gateway                                        | Es necesario definir como se va a almacenar los paquetes en la memoria, como se van a catalogar como enviados y el formato de logs                                  |                       | Pendiente    |
+| Diseño de la gestión de memoria desde la baliza                                         | Es necesario definir como se va a almacenar los paquetes en la memoria, como se van a catalogar como enviados y el formato de logs                                  |                       | Pendiente    |
 | Inicio del informe final                                                                | En semana 7 se entrega el primer avance                                                                                                                             |                       | Pendiente    |
+| Establecimiento de tiempos para ventanas de comunicación del protocolo de forma teórica | Se establece de forma teórica los tiempos de downlink y uplink, se estima tasas de transferencia y estimaciones de probabilidad de corrupción de error de paquetes. |                       | Pendiente    |
+| Diseño de manejo de sesiones en el gateway                                              |                                                                                                                                                                     |                       | Pendiente    |
+| Diseño del Decodificador de paquetes en el gateway                                      |                                                                                                                                                                     |                       | Pendiente    |
+| Exploración de la comunicación con el servidor de Remora                                |                                                                                                                                                                     |                       | Pendiente    |
+
 
 
 
